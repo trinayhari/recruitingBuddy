@@ -48,7 +48,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
 
   if (!brief) {
     console.log('Brief not found for ID:', resolvedParams.id)
-    console.log('Available briefs:', Array.from(briefsStore.keys()))
+    console.log('Available briefs:', await briefsStore.keys())
     notFound()
   }
 
@@ -80,12 +80,21 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
         </div>
 
         <div className="mt-6 text-center">
-          <Link
-            href="/"
-            className="text-blue-600 hover:underline inline-flex items-center"
-          >
-            ← Analyze another submission
-          </Link>
+          <div className="flex items-center justify-center gap-6">
+            <Link
+              href="/"
+              className="text-blue-600 hover:underline inline-flex items-center"
+            >
+              ← Analyze another submission
+            </Link>
+
+            <Link
+              href="/dashboard"
+              className="text-blue-600 hover:underline inline-flex items-center"
+            >
+              Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     </main>

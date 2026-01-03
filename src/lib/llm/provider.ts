@@ -1,7 +1,8 @@
 import { callOpenAI } from './openai'
 import { callAnthropic } from './anthropic'
+import { callOpenRouter } from './openrouter'
 
-export type LLMProvider = 'openai' | 'anthropic'
+export type LLMProvider = 'openai' | 'anthropic' | 'openrouter'
 
 const DEFAULT_PROVIDER: LLMProvider = (process.env.LLM_PROVIDER as LLMProvider) || 'openai'
 
@@ -16,6 +17,8 @@ export async function callLLM(
       return await callOpenAI(prompt, systemPrompt, maxTokens)
     } else if (provider === 'anthropic') {
       return await callAnthropic(prompt, systemPrompt, maxTokens)
+    } else if (provider === 'openrouter') {
+      return await callOpenRouter(prompt, systemPrompt, maxTokens)
     } else {
       throw new Error(`Unknown LLM provider: ${provider}`)
     }

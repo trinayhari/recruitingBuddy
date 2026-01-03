@@ -6,24 +6,47 @@ Do not score or judge the candidate - focus on understanding what was built and 
 
 export function buildTaskInferencePrompt(
   staticAnalysis: StaticAnalysis,
-  readmeContent?: string
+  readmeContent?: string,
+  keyFiles?: string[],
+  keyFileExcerpts?: Array<{ path: string; excerpt: string }>
 ): string {
   const languages = Object.keys(staticAnalysis.languageBreakdown)
     .map(lang => `${lang} (${staticAnalysis.languageBreakdown[lang]} lines)`)
     .join(', ')
 
-  return `Analyze this code repository and infer what the candidate was asked to build.
+  const keyFilesSection = keyFiles && keyFiles.length > 0
+    ? `\nKey Files (high-signal paths; not exhaustive):\n${keyFiles.slice(0, 25).join('\n')}\n`
+    : ''
+
+  const keyFileExcerptsSection = keyFileExcerpts && keyFileExcerpts.length > 0
+    ? `\nCode Excerpts (high-signal; truncated):\n${keyFileExcerpts
+        .map(({ path, excerpt }) => `--- ${path} ---\n${excerpt}`)
+        .join('\n\n')}\n`
+    : ''
+
+  return `Analyze this code repository and write a TL;DR describing what project the candidate built.
 
 Repository Context:
 - Framework: ${staticAnalysis.framework || 'Unknown'}
 - Languages: ${languages}
 - Entry Points: ${staticAnalysis.entryPoints.join(', ') || 'None detected'}
 - Architecture: ${staticAnalysis.architecture || 'Unknown'}
+- Dependencies: ${JSON.stringify(staticAnalysis.dependencies, null, 2)}
 
 ${readmeContent ? `README Content:\n${readmeContent}\n` : 'No README found.'}
+${keyFilesSection}
+${keyFileExcerptsSection}
 
-Based on the code structure, dependencies, and README (if available), what was the candidate likely asked to build?
-Provide a concise 2-3 sentence description. If uncertain, state what you can infer and what's unclear.`
+Instructions:
+- Focus on what the repository IS and DOES (not what the take-home prompt might have been).
+- Be concrete: name the product type (e.g., web app / API / CLI / library), the domain/use-case, and the primary user workflow.
+- Explain at a high level how it works (1 sentence) using evidence from dependencies, entry points, and folder structure.
+- If something is unclear, say what's missing and what you inferred.
+
+Output format:
+- Return 3-5 sentences as plain text (no bullets, no headings).
+
+Question: What project did the candidate build and what does it do?`
 }
 
 export function buildWorkStylePrompt(

@@ -9,8 +9,45 @@ import {
   parseRepoGuideResponse,
   SYSTEM_PROMPT,
 } from '../llm/prompts'
+import * as fs from 'fs/promises'
+import * as path from 'path'
 import { getAllFiles } from '../ingestion/fileTree'
 import { scoreFileImportance } from '../analysis/staticAnalysis'
+
+async function buildKeyFileExcerpts(
+  repoPath: string,
+  filePaths: string[],
+  maxFiles: number = 8,
+  maxCharsPerFile: number = 1400
+): Promise<Array<{ path: string; excerpt: string }>> {
+  const excerpts: Array<{ path: string; excerpt: string }> = []
+
+  for (const filePath of filePaths.slice(0, maxFiles)) {
+    try {
+      const fullPath = path.join(repoPath, filePath)
+      const buf = await fs.readFile(fullPath)
+
+      // Skip likely-binary files
+      if (buf.includes(0)) continue
+
+      const text = buf.toString('utf-8')
+
+      // Skip extremely sparse or unreadable content
+      if (!text.trim()) continue
+
+      const excerpt = text.length > maxCharsPerFile ? `${text.slice(0, maxCharsPerFile)}\n...` : text
+      excerpts.push({
+        path: filePath,
+        excerpt,
+      })
+    } catch {
+      // Ignore unreadable files
+      continue
+    }
+  }
+
+  return excerpts
+}
 
 export interface BriefGenerationInput {
   staticAnalysis: StaticAnalysis
@@ -44,7 +81,14 @@ export async function generateBrief(
   let deliveredDescription: string | undefined
   
   try {
-    const taskPrompt = buildTaskInferencePrompt(input.staticAnalysis, input.readmeContent)
+    const keyFiles = sortedFiles.slice(0, 25)
+    const keyFileExcerpts = await buildKeyFileExcerpts(input.repoPath, keyFiles)
+    const taskPrompt = buildTaskInferencePrompt(
+      input.staticAnalysis,
+      input.readmeContent,
+      keyFiles,
+      keyFileExcerpts
+    )
     taskDescription = await callLLM(taskPrompt, SYSTEM_PROMPT, 300, llmProvider)
   } catch (error) {
     console.error('Failed to generate task description:', error)

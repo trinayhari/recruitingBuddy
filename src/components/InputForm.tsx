@@ -59,7 +59,7 @@ export default function InputForm() {
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/b3058166-5108-41d7-bfb2-ff2dbc671822',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'InputForm.tsx:58',message:'Received response, navigating',data:{returnedId:data.id,responseStatus:response.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
       // #endregion
-      router.push(`/review/${data.id}`)
+      router.push(`/dashboard?selected=${encodeURIComponent(data.id)}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
       setIsSubmitting(false)
@@ -69,10 +69,18 @@ export default function InputForm() {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold mb-2">Take-Home Review Buddy</h1>
-        <p className="text-gray-600 mb-6">
-          Submit a take-home assessment to generate a Reviewer Brief that helps you understand submissions in under 7 minutes.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Take-Home Review Buddy</h1>
+            <p className="text-gray-600 mb-6">
+              Submit a take-home assessment to generate a Reviewer Brief that helps you understand submissions in under 7 minutes.
+            </p>
+          </div>
+
+          <a href="/dashboard" className="text-blue-600 hover:underline text-sm whitespace-nowrap">
+            Dashboard
+          </a>
+        </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* GitHub URL */}
