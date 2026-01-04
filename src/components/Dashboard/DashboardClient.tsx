@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import type { ReviewerBrief } from '@/lib/types'
+import MetricsPanel from './MetricsPanel'
+import MetricBar from '../MetricBar'
+import EmptyState from '../EmptyState'
 
 type SimulatorProvider = 'stackblitz' | 'codesandbox'
 
@@ -69,6 +72,8 @@ function buildCodeSandboxEmbedUrl(githubUrl?: string): string | null {
   return `${base}?${params.toString()}`
 }
 
+type ActiveTab = 'analysis' | 'simulator'
+
 export default function DashboardClient({
   briefs,
   initialSelectedId,
@@ -78,6 +83,8 @@ export default function DashboardClient({
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId || briefs[0]?.id || null)
   const [provider, setProvider] = useState<SimulatorProvider>('codesandbox')
+  const [activeTab, setActiveTab] = useState<ActiveTab>('analysis')
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   const selected = useMemo(
     () => briefs.find((b) => b.id === selectedId) || null,
@@ -122,189 +129,373 @@ export default function DashboardClient({
 
   const embedUrl = provider === 'stackblitz' ? stackBlitzUrl : codeSandboxUrl
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <section className="bg-white rounded-lg shadow-lg p-4 lg:col-span-3">
-        <h2 className="text-xl font-semibold mb-3">Submissions</h2>
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 's' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setActiveTab(activeTab === 'analysis' ? 'simulator' : 'analysis')
+      }
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [activeTab, isFullscreen])
 
-        {briefs.length === 0 ? (
-          <div className="text-gray-600 text-sm">No briefs yet. Analyze a submission first.</div>
-        ) : (
-          <div className="space-y-2">
-            {briefs.map((brief) => {
-              const isActive = brief.id === selectedId
-              const subtitle = getSubmissionSubtitle(brief)
-              return (
-                <button
-                  key={brief.id}
-                  onClick={() => setSelectedId(brief.id)}
-                  className={`w-full text-left rounded-md border px-3 py-2 transition-colors ${
-                    isActive
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="font-medium truncate">{getSubmissionTitle(brief)}</div>
-                  {subtitle && <div className="text-xs text-gray-500 truncate">{subtitle}</div>}
-                  <div className="text-xs text-gray-500 mt-1">
-                    {brief.metadata.analyzedAt.toLocaleString()}
-                  </div>
-                </button>
-              )
-            })}
+  // Fullscreen overlay component
+  const FullscreenSimulator = () => {
+    if (!isFullscreen || !selected?.artifacts.githubUrl) return null
+
+    const repo = parseGitHubRepo(selected.artifacts.githubUrl)
+
+    return (
+      <div className="fixed inset-0 z-50 bg-neutral-900 flex flex-col">
+        <div className="flex items-center justify-between p-4 bg-neutral-800 border-b border-neutral-700">
+          <div className="flex items-center gap-4">
+            <h2 className="text-h2 font-medium text-white">Simulator</h2>
+            {repo && (
+              <span className="text-body-sm text-neutral-400">
+                {repo.owner}/{repo.repo}
+              </span>
+            )}
           </div>
-        )}
-      </section>
-
-      <section className="bg-white rounded-lg shadow-lg p-4 lg:col-span-3">
-        <h2 className="text-xl font-semibold mb-3">Analysis</h2>
-
-        {!selected ? (
-          <div className="text-gray-600 text-sm">Select a submission to view details.</div>
-        ) : (
-          <div className="space-y-3 text-sm">
-            <div>
-              <div className="text-gray-500">TL;DR</div>
-              <div className="mt-1">{selected.tldr.task || '—'}</div>
-            </div>
-
-            <div>
-              <div className="text-gray-500">Stack</div>
-              <div className="mt-1">{selected.tldr.stack?.join(', ') || '—'}</div>
-            </div>
-
-            <div>
-              <div className="text-gray-500">Review</div>
-              <div className="mt-1">
-                <Link
-                  href={`/review/${selected.id}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  Open full Reviewer Brief
-                </Link>
-              </div>
-            </div>
-
-            <div>
-              <div className="text-gray-500">GitHub</div>
-              <div className="mt-1">
-                {selected.artifacts.githubUrl ? (
-                  <a
-                    href={selected.artifacts.githubUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-600 hover:underline break-all"
-                  >
-                    {selected.artifacts.githubUrl}
-                  </a>
-                ) : (
-                  '—'
-                )}
-              </div>
-            </div>
-
-            <div className="mt-3 text-xs text-gray-500">
-              Simulator runs in a browser sandbox (StackBlitz). Some projects may not fully run if they depend on
-              private env keys or non-browser backends.
-            </div>
-          </div>
-        )}
-      </section>
-
-      <section className="bg-white rounded-lg shadow-lg p-4 lg:col-span-6">
-        <h2 className="text-xl font-semibold mb-3">Simulator</h2>
-
-        {!selected ? (
-          <div className="text-gray-600 text-sm">Select a submission to simulate.</div>
-        ) : !selected.artifacts.githubUrl ? (
-          <div className="text-gray-600 text-sm">
-            No GitHub URL was provided for this submission. (Zip uploads can’t be simulated via StackBlitz.)
-          </div>
-        ) : !stackBlitzUrl && !codeSandboxUrl ? (
-          <div className="text-gray-600 text-sm">Could not parse GitHub URL for sandbox preview.</div>
-        ) : (
-          <div className="w-full">
-            <div className="mb-2 text-xs text-gray-500">
-              Embedded preview: {parseGitHubRepo(selected.artifacts.githubUrl)?.owner}/
-              {parseGitHubRepo(selected.artifacts.githubUrl)?.repo}
-            </div>
-
-            <div className="mb-3 flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Provider Toggle */}
+            <div className="flex items-center gap-2 bg-neutral-700 rounded-lg p-1">
               <button
-                type="button"
-                onClick={() => setProvider('stackblitz')}
-                className={`text-sm px-3 py-1 rounded border ${
-                  provider === 'stackblitz'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:bg-gray-50'
-                }`}
-                disabled={!stackBlitzUrl || isLikelyNextProject}
-              >
-                StackBlitz
-              </button>
-              <button
-                type="button"
                 onClick={() => setProvider('codesandbox')}
-                className={`text-sm px-3 py-1 rounded border ${
+                className={`px-3 py-1.5 text-body-sm font-medium rounded transition-colors duration-base ${
                   provider === 'codesandbox'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:bg-gray-50'
-                }`}
-                disabled={!codeSandboxUrl}
+                    ? 'bg-neutral-600 text-white'
+                    : 'text-neutral-300 hover:text-white'
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500`}
               >
                 CodeSandbox
               </button>
+              <button
+                onClick={() => setProvider('stackblitz')}
+                disabled={isLikelyNextProject}
+                className={`px-3 py-1.5 text-body-sm font-medium rounded transition-colors duration-base ${
+                  provider === 'stackblitz'
+                    ? 'bg-neutral-600 text-white'
+                    : 'text-neutral-300 hover:text-white'
+                } ${isLikelyNextProject ? 'opacity-50 cursor-not-allowed' : ''} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500`}
+                title={isLikelyNextProject ? 'Not recommended for Next.js projects' : ''}
+              >
+                StackBlitz
+              </button>
             </div>
-
-            {isLikelyNextProject && (
-              <div className="mb-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-                StackBlitz may fail for some Next.js repos due to Turbo/WASM limitations. Defaulting to CodeSandbox.
-              </div>
-            )}
-
-            {stackBlitzProjectUrl && (
-              <div className="mb-2">
-                <a
-                  href={stackBlitzProjectUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-600 hover:underline text-sm"
-                >
-                  Open in StackBlitz
-                </a>
-              </div>
-            )}
-
+            {/* External Links */}
             {codeSandboxProjectUrl && (
-              <div className="mb-3">
-                <a
-                  href={codeSandboxProjectUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-600 hover:underline text-sm"
+              <a
+                href={codeSandboxProjectUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-body-sm text-primary-400 hover:text-primary-300 transition-colors duration-base"
+              >
+                Open in CodeSandbox →
+              </a>
+            )}
+            {stackBlitzProjectUrl && (
+              <a
+                href={stackBlitzProjectUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-body-sm text-primary-400 hover:text-primary-300 transition-colors duration-base"
+              >
+                Open in StackBlitz →
+              </a>
+            )}
+            <button
+              onClick={() => setIsFullscreen(false)}
+              className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white text-body-sm font-medium rounded-lg transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            >
+              Exit Fullscreen (ESC)
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 relative">
+          <iframe
+            title="Repo Simulator"
+            src={embedUrl || ''}
+            className="w-full h-full"
+            allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+            sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+          />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <FullscreenSimulator />
+      {!isFullscreen && (
+        <div className="flex gap-5 h-[calc(100vh-200px)]">
+          {/* Fixed Sidebar - Submissions */}
+          <aside className="w-[280px] flex-shrink-0 border-r border-neutral-200 pr-5">
+            <h2 className="text-h2 font-medium mb-4 text-neutral-900">Submissions</h2>
+
+            {briefs.length === 0 ? (
+              <EmptyState
+                title="No submissions yet"
+                description="Analyze your first take-home assessment to get started."
+                action={{
+                  label: 'Analyze Submission',
+                  href: '/',
+                }}
+              />
+            ) : (
+              <div className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-250px)]">
+                {briefs.map((brief) => {
+                  const isActive = brief.id === selectedId
+                  const subtitle = getSubmissionSubtitle(brief)
+                  return (
+                    <button
+                      key={brief.id}
+                      onClick={() => setSelectedId(brief.id)}
+                      className={`w-full text-left rounded-lg px-3 py-2.5 transition-all duration-base ${
+                        isActive
+                          ? 'bg-neutral-50 border-l-[3px] border-l-primary-600 pl-2.5'
+                          : 'hover:bg-neutral-50 border-l-[3px] border-l-transparent'
+                      } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
+                    >
+                      <div className="text-body-lg font-medium truncate text-neutral-900">
+                        {getSubmissionTitle(brief)}
+                      </div>
+                      {subtitle && (
+                        <div className="text-body-sm text-neutral-600 truncate mt-0.5">
+                          {subtitle}
+                        </div>
+                      )}
+                      <div className="text-caption text-neutral-500 mt-1">
+                        {brief.metadata.analyzedAt.toLocaleString()}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </aside>
+
+          {/* Main Content Area with Tabs */}
+          <main className="flex-1 min-w-0 flex flex-col">
+            {/* Tab Bar */}
+            {selected && (
+              <div className="flex items-center gap-1 mb-4 border-b border-neutral-200">
+                <button
+                  onClick={() => setActiveTab('analysis')}
+                  className={`px-4 py-2 text-body font-medium transition-colors duration-base relative ${
+                    activeTab === 'analysis'
+                      ? 'text-primary-600'
+                      : 'text-neutral-600 hover:text-neutral-900'
+                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded-t`}
                 >
-                  Open in CodeSandbox
-                </a>
+                  Analysis
+                  {activeTab === 'analysis' && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 -mb-px" />
+                  )}
+                </button>
+                {selected.artifacts.githubUrl && (
+                  <button
+                    onClick={() => setActiveTab('simulator')}
+                    className={`px-4 py-2 text-body font-medium transition-colors duration-base relative ${
+                      activeTab === 'simulator'
+                        ? 'text-primary-600'
+                        : 'text-neutral-600 hover:text-neutral-900'
+                    } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded-t`}
+                  >
+                    Try It Out
+                    {activeTab === 'simulator' && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 -mb-px" />
+                    )}
+                  </button>
+                )}
               </div>
             )}
 
-            <div className="w-full rounded-md overflow-hidden border border-gray-200 h-[70vh] min-h-[520px]">
-              <iframe
-                title="Repo Simulator"
-                src={embedUrl || ''}
-                className="w-full h-full"
-                allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-                sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-              />
-            </div>
+            {/* Tab Content */}
+            <div className="flex-1 overflow-y-auto pr-5">
+              {!selected ? (
+                <div className="text-body text-neutral-600 py-12">
+                  Select a submission to view details.
+                </div>
+              ) : activeTab === 'analysis' ? (
+                <div className="space-y-6 transition-opacity duration-200">
+                  <div>
+                    <h2 className="text-h1 font-semibold mb-4 text-neutral-900">Summary</h2>
+                    <dl className="space-y-4">
+                      {selected.tldr.task && (
+                        <div>
+                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">Task</dt>
+                          <dd className="text-body text-neutral-900">{selected.tldr.task}</dd>
+                        </div>
+                      )}
+                      {selected.tldr.delivered && (
+                        <div>
+                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">Delivered</dt>
+                          <dd className="text-body text-neutral-900">{selected.tldr.delivered}</dd>
+                        </div>
+                      )}
+                      {selected.tldr.stack && selected.tldr.stack.length > 0 && (
+                        <div>
+                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">Stack</dt>
+                          <dd className="text-body text-neutral-900">{selected.tldr.stack.join(', ')}</dd>
+                        </div>
+                      )}
+                      {selected.metrics && (
+                        <div>
+                          <dt className="text-body-sm font-medium text-neutral-600 mb-2">Hire Signal</dt>
+                          <dd>
+                            <MetricBar value={selected.metrics.overallHireSignal} label="" size="medium" />
+                            {selected.metrics.redFlags.length > 0 && (
+                              <p className="text-body-sm text-signal-low mt-1">
+                                {selected.metrics.redFlags.length} red flag{selected.metrics.redFlags.length !== 1 ? 's' : ''} detected
+                              </p>
+                            )}
+                          </dd>
+                        </div>
+                      )}
+                      <div>
+                        <dt className="text-body-sm font-medium text-neutral-600 mb-1">Review</dt>
+                        <dd>
+                          <Link
+                            href={`/review/${selected.id}`}
+                            className="text-body text-primary-600 hover:text-primary-700 font-medium transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+                          >
+                            Open full Reviewer Brief →
+                          </Link>
+                        </dd>
+                      </div>
+                      {selected.artifacts.githubUrl && (
+                        <div>
+                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">GitHub</dt>
+                          <dd>
+                            <a
+                              href={selected.artifacts.githubUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-body text-primary-600 hover:text-primary-700 break-all transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+                            >
+                              {selected.artifacts.githubUrl}
+                            </a>
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+                  </div>
 
-            <div className="mt-3 text-xs text-gray-500">
-              If the embed looks stuck on “cloning”, open it in a new tab (links above) to see the full error.
-              Common causes are private repos, large installs, or required secrets.
+                  {/* Metrics Panel */}
+                  {selected.metrics && (
+                    <MetricsPanel metrics={selected.metrics} />
+                  )}
+                </div>
+              ) : (
+                /* Simulator Tab Content */
+                !selected.artifacts.githubUrl ? (
+                  <div className="text-body text-neutral-600 py-12 transition-opacity duration-200">
+                    No GitHub URL was provided for this submission. (Zip uploads can't be simulated.)
+                  </div>
+                ) : !codeSandboxUrl && !stackBlitzUrl ? (
+                  <div className="text-body text-neutral-600 py-12 transition-opacity duration-200">
+                    Could not parse GitHub URL for sandbox preview.
+                  </div>
+                ) : (
+                  <div className="space-y-4 transition-opacity duration-200">
+                    <div className="flex items-center justify-between">
+                      <div className="text-caption text-neutral-500">
+                        Embedded preview: {parseGitHubRepo(selected.artifacts.githubUrl)?.owner}/
+                        {parseGitHubRepo(selected.artifacts.githubUrl)?.repo}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {/* Provider Toggle */}
+                        <div className="flex items-center gap-2 bg-neutral-100 rounded-lg p-1">
+                          <button
+                            onClick={() => setProvider('codesandbox')}
+                            className={`px-3 py-1.5 text-body-sm font-medium rounded transition-colors duration-base ${
+                              provider === 'codesandbox'
+                                ? 'bg-white text-primary-600 shadow-sm'
+                                : 'text-neutral-600 hover:text-neutral-900'
+                            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
+                          >
+                            CodeSandbox
+                          </button>
+                          <button
+                            onClick={() => setProvider('stackblitz')}
+                            disabled={isLikelyNextProject}
+                            className={`px-3 py-1.5 text-body-sm font-medium rounded transition-colors duration-base ${
+                              provider === 'stackblitz'
+                                ? 'bg-white text-primary-600 shadow-sm'
+                                : 'text-neutral-600 hover:text-neutral-900'
+                            } ${isLikelyNextProject ? 'opacity-50 cursor-not-allowed' : ''} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
+                            title={isLikelyNextProject ? 'Not recommended for Next.js projects' : ''}
+                          >
+                            StackBlitz
+                          </button>
+                        </div>
+                        {/* Fullscreen Button */}
+                        <button
+                          onClick={() => setIsFullscreen(true)}
+                          className="px-3 py-1.5 text-body-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+                        >
+                          Fullscreen
+                        </button>
+                      </div>
+                    </div>
+
+                    {isLikelyNextProject && provider === 'stackblitz' && (
+                      <div className="text-body-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        Note: Auto-switched to CodeSandbox for better Next.js compatibility.
+                      </div>
+                    )}
+
+                    {/* External Links */}
+                    <div className="flex items-center gap-4">
+                      {codeSandboxProjectUrl && (
+                        <a
+                          href={codeSandboxProjectUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-body-sm text-primary-600 hover:text-primary-700 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+                        >
+                          Open in CodeSandbox →
+                        </a>
+                      )}
+                      {stackBlitzProjectUrl && (
+                        <a
+                          href={stackBlitzProjectUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-body-sm text-primary-600 hover:text-primary-700 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+                        >
+                          Open in StackBlitz →
+                        </a>
+                      )}
+                    </div>
+
+                    <div className="w-full rounded-lg overflow-hidden border border-neutral-200 h-[70vh] min-h-[520px]">
+                      <iframe
+                        title="Repo Simulator"
+                        src={embedUrl || ''}
+                        className="w-full h-full"
+                        allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+                        sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+                      />
+                    </div>
+
+                    <div className="text-caption text-neutral-500">
+                      If the embed looks stuck on "cloning", open it in a new tab (links above) to see the full error.
+                      Common causes are private repos, large installs, or required secrets.
+                    </div>
+                  </div>
+                )
+              )}
             </div>
-          </div>
-        )}
-      </section>
-    </div>
+          </main>
+        </div>
+      )}
+    </>
   )
 }

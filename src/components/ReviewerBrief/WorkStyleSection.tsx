@@ -11,36 +11,33 @@ export default function WorkStyleSection({ workStyle }: WorkStyleSectionProps) {
     high: 'HIGH',
   }[workStyle.iterationPattern]
 
-  const iterationColor = {
-    low: 'bg-blue-100 text-blue-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    high: 'bg-green-100 text-green-800',
-  }[workStyle.iterationPattern]
-
   return (
-    <section className="mb-8">
-      <h2 className="text-2xl font-bold mb-4 pb-2 border-b">How the Candidate Worked</h2>
-      <div className="space-y-3">
+    <section className="border-l-[3px] border-l-neutral-200 pl-5 -ml-8">
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-h1 font-semibold text-neutral-900">How the Candidate Worked</h2>
+        <span className="text-caption text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">AI Analysis</span>
+      </div>
+      <div className="space-y-4">
         <div>
-          <span className="font-semibold">Iteration Pattern: </span>
-          <span className={`px-2 py-1 rounded text-sm font-medium ${iterationColor}`}>
+          <span className="text-body-sm font-medium text-neutral-600">Iteration Pattern: </span>
+          <span className="text-body text-neutral-900 font-medium">
             {iterationLabel}
           </span>
         </div>
         {workStyle.aiCollaborationStyle && (
           <div>
-            <span className="font-semibold">AI Collaboration: </span>
-            <span>{workStyle.aiCollaborationStyle}</span>
+            <span className="text-body-sm font-medium text-neutral-600">AI Collaboration: </span>
+            <span className="text-body text-neutral-900">{workStyle.aiCollaborationStyle}</span>
           </div>
         )}
         {workStyle.manualIntervention && workStyle.manualIntervention.length > 0 && (
           <div>
-            <span className="font-semibold">Manual Intervention: </span>
-            <span>{workStyle.manualIntervention.join(', ')}</span>
+            <span className="text-body-sm font-medium text-neutral-600">Manual Intervention: </span>
+            <span className="text-body text-neutral-900">{workStyle.manualIntervention.join(', ')}</span>
           </div>
         )}
         {workStyle.confidence === 'low' && (
-          <div className="text-sm text-gray-500 italic">
+          <div className="text-body-sm text-neutral-500">
             Note: Limited data available for work style analysis
           </div>
         )}

@@ -12,16 +12,16 @@ export default function ArtifactsSection({ artifacts }: ArtifactsSectionProps) {
   }
 
   return (
-    <section className="mb-8">
-      <h2 className="text-2xl font-bold mb-4 pb-2 border-b">Raw Artifacts</h2>
-      <div className="space-y-2">
+    <section>
+      <h2 className="text-h1 font-semibold mb-4 text-neutral-900">Raw Artifacts</h2>
+      <div className="space-y-3">
         {artifacts.githubUrl && (
           <div>
             <a
               href={artifacts.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-body text-primary-600 hover:text-primary-700 font-medium transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
             >
               GitHub Repo →
             </a>
@@ -33,7 +33,7 @@ export default function ArtifactsSection({ artifacts }: ArtifactsSectionProps) {
               href={artifacts.videoLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-body text-primary-600 hover:text-primary-700 font-medium transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
             >
               Demo Video →
             </a>
@@ -41,8 +41,8 @@ export default function ArtifactsSection({ artifacts }: ArtifactsSectionProps) {
         )}
         {artifacts.chatExport && (
           <div>
-            <span className="text-gray-600">AI Chat Export: </span>
-            <span className="text-sm">Available (see analysis above)</span>
+            <span className="text-body-sm text-neutral-600">AI Chat Export: </span>
+            <span className="text-body-sm text-neutral-900">Available (see analysis above)</span>
           </div>
         )}
       </div>

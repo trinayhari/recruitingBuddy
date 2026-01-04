@@ -7,24 +7,30 @@ interface DecisionsSectionProps {
 export default function DecisionsSection({ decisions }: DecisionsSectionProps) {
   if (decisions.length === 0) {
     return (
-      <section className="mb-8">
-        <h2 className="text-2xl font-bold mb-4 pb-2 border-b">Key Decisions & Tradeoffs</h2>
-        <p className="text-gray-500 italic">No clear decisions could be inferred from the available information.</p>
+      <section className="border-l-[3px] border-l-neutral-200 pl-5 -ml-8">
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-h1 font-semibold text-neutral-900">Key Decisions & Tradeoffs</h2>
+          <span className="text-caption text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">AI Analysis</span>
+        </div>
+        <p className="text-body text-neutral-500">No clear decisions could be inferred from the available information.</p>
       </section>
     )
   }
 
   return (
-    <section className="mb-8">
-      <h2 className="text-2xl font-bold mb-4 pb-2 border-b">Key Decisions & Tradeoffs</h2>
-      <ul className="space-y-3">
+    <section className="border-l-3 border-l-neutral-200 pl-5 -ml-8">
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-h1 font-semibold text-neutral-900">Key Decisions & Tradeoffs</h2>
+        <span className="text-caption text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">AI Analysis</span>
+      </div>
+      <ul className="space-y-4">
         {decisions.map((decision, index) => (
           <li key={index} className="flex flex-col">
-            <span className="font-medium">• {decision.decision}</span>
+            <span className="text-body font-medium text-neutral-900">{decision.decision}</span>
             {decision.rationale && (
-              <span className="text-sm text-gray-600 ml-4">{decision.rationale}</span>
+              <span className="text-body-sm text-neutral-600 mt-1 ml-4">{decision.rationale}</span>
             )}
-            <span className="text-xs text-gray-400 ml-4">(Source: {decision.source})</span>
+            <span className="text-caption text-neutral-500 mt-1 ml-4">(Source: {decision.source})</span>
           </li>
         ))}
       </ul>

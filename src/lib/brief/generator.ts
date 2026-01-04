@@ -13,6 +13,7 @@ import * as fs from 'fs/promises'
 import * as path from 'path'
 import { getAllFiles } from '../ingestion/fileTree'
 import { scoreFileImportance } from '../analysis/staticAnalysis'
+import { computeMetrics } from '../analysis/metricsAnalysis'
 
 async function buildKeyFileExcerpts(
   repoPath: string,
@@ -180,6 +181,21 @@ export async function generateBrief(
     deliveredDescription = buildDeliveredDescription(input.staticAnalysis)
   }
 
+  // Compute quantifiable metrics
+  let metrics
+  try {
+    metrics = await computeMetrics(
+      input.staticAnalysis,
+      input.commitAnalysis,
+      input.repoPath,
+      input.readmeContent
+    )
+  } catch (error) {
+    console.error('Failed to compute metrics:', error)
+    hasPartialData = true
+    // Metrics are optional, so we continue without them
+  }
+
   const analysisDuration = Date.now() - startTime
 
   return {
@@ -193,6 +209,7 @@ export async function generateBrief(
     workStyle,
     decisions,
     repoGuide,
+    metrics,
     artifacts: {
       githubUrl: input.githubUrl,
       videoLink: input.videoLink,

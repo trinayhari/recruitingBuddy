@@ -53,44 +53,46 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
+    <main className="min-h-screen bg-neutral-50 py-12">
       <div className="max-w-4xl mx-auto px-6">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="mb-6 pb-4 border-b">
-            <h1 className="text-3xl font-bold">Take-Home Review Buddy</h1>
-            <p className="text-gray-600 mt-1">
+        <div className="bg-white border border-neutral-200 rounded-lg shadow-sm p-8">
+          <div className="mb-8">
+            <h1 className="text-display font-semibold text-neutral-900">Take-Home Review Buddy</h1>
+            <p className="text-body-lg text-neutral-600 mt-1">
               Reviewer Brief • {brief.metadata.analyzedAt.toLocaleString()}
             </p>
             {brief.metadata.hasPartialData && (
-              <div className="mt-2 text-sm text-yellow-600 bg-yellow-50 px-3 py-2 rounded">
-                ⚠️ Some analysis data is incomplete or unavailable
+              <div className="mt-3 text-body-sm text-signal-moderate bg-neutral-50 border-l-[3px] border-l-signal-moderate px-4 py-2.5 rounded-r-md">
+                Some analysis data is incomplete or unavailable
               </div>
             )}
           </div>
 
-          <TLDRSection tldr={brief.tldr} />
-          <WorkStyleSection workStyle={brief.workStyle} />
-          <DecisionsSection decisions={brief.decisions} />
-          <RepoGuideSection repoGuide={brief.repoGuide} />
-          <ArtifactsSection artifacts={brief.artifacts} />
+          <div className="space-y-12">
+            <TLDRSection tldr={brief.tldr} metrics={brief.metrics} />
+            <WorkStyleSection workStyle={brief.workStyle} />
+            <DecisionsSection decisions={brief.decisions} />
+            <RepoGuideSection repoGuide={brief.repoGuide} />
+            <ArtifactsSection artifacts={brief.artifacts} />
+          </div>
 
-          <div className="mt-8 pt-4 border-t text-xs text-gray-400">
+          <div className="mt-12 pt-6 border-t border-neutral-200 text-caption text-neutral-500">
             Analysis completed in {brief.metadata.analysisDuration}ms using {brief.metadata.llmProvider}
           </div>
         </div>
 
-        <div className="mt-6 text-center">
+        <div className="mt-8 text-center">
           <div className="flex items-center justify-center gap-6">
             <Link
               href="/"
-              className="text-blue-600 hover:underline inline-flex items-center"
+              className="text-body-sm text-primary-600 hover:text-primary-700 font-medium transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded inline-flex items-center"
             >
               ← Analyze another submission
             </Link>
 
             <Link
               href="/dashboard"
-              className="text-blue-600 hover:underline inline-flex items-center"
+              className="text-body-sm text-primary-600 hover:text-primary-700 font-medium transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded inline-flex items-center"
             >
               Dashboard
             </Link>
