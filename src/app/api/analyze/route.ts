@@ -9,6 +9,9 @@ import { generateBrief, BriefGenerationInput } from '@/lib/brief/generator'
 import { briefsStore } from '@/lib/store'
 import { appendFile } from 'fs/promises'
 import { join } from 'path'
+import { createPrompt, saveSubmission } from '@/lib/supabase/store'
+import { extractRequirements, postProcessRequirements } from '@/lib/requirements/extractor'
+import { generateTestSuite } from '@/lib/testing/generator'
 
 export async function POST(request: NextRequest) {
   console.log('=== API ROUTE CALLED ===', Date.now());
@@ -30,6 +33,8 @@ export async function POST(request: NextRequest) {
     const videoLink = formData.get('videoLink') as string | null
     const chatExport = formData.get('chatExport') as string | null
     const reflections = formData.get('reflections') as string | null
+    const projectPrompt = formData.get('projectPrompt') as string | null
+    const autoGenerateTests = formData.get('autoGenerateTests') === 'true'
 
     // Validate input
     if (!githubUrl && !zipFile) {
@@ -122,12 +127,61 @@ export async function POST(request: NextRequest) {
       appendFile(logPath2, logEntry2).catch(()=>{});
       // #endregion
       await briefsStore.set(submissionId, brief)
+      
+      // Save submission to Supabase (if configured)
+      await saveSubmission(submissionId, {
+        githubUrl: githubUrl || undefined,
+        videoLink: videoLink || undefined,
+        chatExport: chatExport || undefined,
+        reflections: reflections || undefined,
+        briefData: brief,
+      })
+
+      // Handle project prompt and auto-generate requirements/tests if provided
+      let promptId: string | undefined
+      let requirementSpecId: string | undefined
+      let testSuiteId: string | undefined
+
+      if (projectPrompt && projectPrompt.trim()) {
+        try {
+          // Create prompt
+          promptId = await createPrompt(projectPrompt.trim())
+          
+          // Update submission with prompt_id
+          await saveSubmission(submissionId, { promptId })
+
+          if (autoGenerateTests) {
+            // Extract requirements
+            const extractionResult = await extractRequirements(projectPrompt.trim())
+            const processedSpec = postProcessRequirements(extractionResult.spec)
+            
+            // Save requirement spec
+            const { saveRequirementSpec } = await import('@/lib/supabase/store')
+            requirementSpecId = await saveRequirementSpec(promptId, processedSpec)
+
+            // Generate test suite
+            const testSuite = await generateTestSuite(
+              processedSpec,
+              requirementSpecId,
+              staticAnalysis
+            )
+            
+            // Save test suite
+            const { saveTestSuite } = await import('@/lib/supabase/store')
+            testSuiteId = await saveTestSuite(testSuite)
+          }
+        } catch (error) {
+          console.error('Error processing project prompt:', error)
+          // Continue without failing the whole request
+        }
+      }
+
       // #region agent log
       const logPath3 = join(process.cwd(), '.cursor', 'debug.log');
       const storeKeysAfter = await briefsStore.keys();
       const storeSizeAfter = await briefsStore.size();
       const hasBrief = await briefsStore.has(submissionId);
-      const logEntry3 = JSON.stringify({location:'route.ts:112',message:'After storing brief',data:{submissionId,storeSize:storeSizeAfter,storeKeys:storeKeysAfter,hasBrief},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n';
+      const logEntry3 = JSON.stringify({location:'route.ts:112',message:'After storing brief',data:{submissionId,storeSize:storeSizeAfter,storeKeys:storeKeysAfter,hasBrief,promptId,requirementSpecId,testSuiteId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n';
       appendFile(logPath3, logEntry3).catch(()=>{});
       // #endregion
       console.log('Brief stored with ID:', submissionId)
@@ -145,10 +199,15 @@ export async function POST(request: NextRequest) {
       const finalStoreKeys = await briefsStore.keys();
       const finalStoreSize = await briefsStore.size();
       const finalHasBrief = await briefsStore.has(submissionId);
-      const logEntry4 = JSON.stringify({location:'route.ts:127',message:'Returning response with ID',data:{submissionId,storeSize:finalStoreSize,storeKeys:finalStoreKeys,hasBrief:finalHasBrief},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})+'\n';
+      const logEntry4 = JSON.stringify({location:'route.ts:127',message:'Returning response with ID',data:{submissionId,storeSize:finalStoreSize,storeKeys:finalStoreKeys,hasBrief:finalHasBrief,promptId,requirementSpecId,testSuiteId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})+'\n';
       appendFile(logPath4, logEntry4).catch(()=>{});
       // #endregion
-      return NextResponse.json({ id: submissionId })
+      return NextResponse.json({ 
+        id: submissionId,
+        prompt_id: promptId,
+        requirement_spec_id: requirementSpecId,
+        test_suite_id: testSuiteId,
+      })
     } catch (error) {
       // Cleanup on error
       if (repoPath) {

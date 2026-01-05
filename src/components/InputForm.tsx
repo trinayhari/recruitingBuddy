@@ -15,6 +15,8 @@ export default function InputForm() {
   const [videoLink, setVideoLink] = useState('')
   const [chatExport, setChatExport] = useState('')
   const [reflections, setReflections] = useState('')
+  const [projectPrompt, setProjectPrompt] = useState('')
+  const [autoGenerateTests, setAutoGenerateTests] = useState(false)
 
   const validateGithubUrl = (url: string): boolean => {
     if (!url) return false
@@ -46,6 +48,8 @@ export default function InputForm() {
       if (videoLink) formData.append('videoLink', videoLink)
       if (chatExport) formData.append('chatExport', chatExport)
       if (reflections) formData.append('reflections', reflections)
+      if (projectPrompt) formData.append('projectPrompt', projectPrompt)
+      if (autoGenerateTests) formData.append('autoGenerateTests', 'true')
 
       const response = await fetch('/api/analyze', {
         method: 'POST',
@@ -123,6 +127,39 @@ export default function InputForm() {
           <p className="text-caption text-neutral-500 mt-1.5">
             {githubUrl ? 'GitHub URL provided, zip upload disabled' : 'Upload a zip file containing the code'}
           </p>
+        </div>
+
+        {/* Project Prompt */}
+        <div>
+          <label htmlFor="projectPrompt" className="block text-body-sm font-medium mb-2 text-neutral-900">
+            Project Prompt <span className="text-neutral-500 font-normal">(optional)</span>
+          </label>
+          <textarea
+            id="projectPrompt"
+            value={projectPrompt}
+            onChange={(e) => setProjectPrompt(e.target.value)}
+            placeholder="Paste the project requirements/prompt here to enable automated test generation..."
+            rows={6}
+            className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed resize-y"
+            disabled={isSubmitting}
+          />
+          <p className="text-caption text-neutral-500 mt-1.5">
+            If provided, the system will extract requirements and generate tests automatically
+          </p>
+          {projectPrompt && (
+            <div className="mt-2">
+              <label className="flex items-center gap-2 text-body-sm text-neutral-700">
+                <input
+                  type="checkbox"
+                  checked={autoGenerateTests}
+                  onChange={(e) => setAutoGenerateTests(e.target.checked)}
+                  className="rounded border-neutral-300 text-primary-600 focus:ring-primary-600"
+                  disabled={isSubmitting}
+                />
+                <span>Auto-generate tests after analysis</span>
+              </label>
+            </div>
+          )}
         </div>
 
         {/* Optional Fields - Collapsed by default */}
