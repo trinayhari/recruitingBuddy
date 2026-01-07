@@ -2,11 +2,18 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createPrompt } from '@/lib/supabase/store';
+import { getUser } from '@/lib/auth/server';
 
 export async function POST(request: NextRequest) {
+  // Verify authentication
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
-    const { content, autoGenerate } = body;
+    const { content, autoGenerate, title, shareable } = body;
 
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return NextResponse.json(
@@ -15,10 +22,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const promptId = await createPrompt(content.trim());
+    const result = await createPrompt(content.trim(), user.id, { title, shareable });
 
     return NextResponse.json({
-      id: promptId,
+      id: result.id,
+      shareableToken: result.shareableToken,
       message: 'Prompt created successfully',
       autoGenerate: autoGenerate || false,
     });

@@ -57,8 +57,21 @@ export default function InputForm() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Analysis failed')
+        // Try to parse JSON error, but handle HTML error pages
+        let errorMessage = 'Analysis failed'
+        try {
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json()
+            errorMessage = errorData.error || errorMessage
+          } else {
+            const text = await response.text()
+            errorMessage = `Server error (${response.status}): ${text.substring(0, 100)}`
+          }
+        } catch (parseError) {
+          errorMessage = `Server error (${response.status})`
+        }
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
@@ -66,6 +79,7 @@ export default function InputForm() {
       fetch('http://127.0.0.1:7242/ingest/b3058166-5108-41d7-bfb2-ff2dbc671822',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'InputForm.tsx:58',message:'Received response, navigating',data:{returnedId:data.id,responseStatus:response.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
       // #endregion
       router.push(`/dashboard?selected=${encodeURIComponent(data.id)}`)
+      router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
       setIsSubmitting(false)

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
+import Navigation from "@/components/Navigation";
 
 const inter = Inter({
   weight: ["400", "500", "600"],
@@ -19,7 +21,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        <AuthProvider>
+          <Navigation />
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }

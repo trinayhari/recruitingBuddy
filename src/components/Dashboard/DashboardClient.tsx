@@ -6,6 +6,7 @@ import type { ReviewerBrief } from '@/lib/types'
 import MetricsPanel from './MetricsPanel'
 import MetricBar from '../MetricBar'
 import EmptyState from '../EmptyState'
+import CreateAssessmentForm from '../Assessment/CreateAssessmentForm'
 
 type SimulatorProvider = 'stackblitz' | 'codesandbox'
 
@@ -73,18 +74,35 @@ function buildCodeSandboxEmbedUrl(githubUrl?: string): string | null {
 }
 
 type ActiveTab = 'analysis' | 'simulator'
+type ViewMode = 'submissions' | 'assessments'
+
+interface Assessment {
+  id: string
+  title?: string
+  content: string
+  shareable_token?: string
+  created_at: string
+  submissions: ReviewerBrief[]
+  submissionCount: number
+}
 
 export default function DashboardClient({
   briefs,
+  assessments = [],
   initialSelectedId,
 }: {
   briefs: ReviewerBrief[]
+  assessments?: Assessment[]
   initialSelectedId?: string | null
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId || briefs[0]?.id || null)
   const [provider, setProvider] = useState<SimulatorProvider>('codesandbox')
   const [activeTab, setActiveTab] = useState<ActiveTab>('analysis')
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>('submissions')
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null)
+  const [showCreateAssessment, setShowCreateAssessment] = useState(false)
+  const [assessmentsList, setAssessmentsList] = useState<Assessment[]>(assessments)
 
   const selected = useMemo(
     () => briefs.find((b) => b.id === selectedId) || null,
@@ -229,54 +247,161 @@ export default function DashboardClient({
     )
   }
 
+  const selectedAssessment = useMemo(
+    () => assessmentsList.find((a) => a.id === selectedAssessmentId) || null,
+    [assessmentsList, selectedAssessmentId]
+  )
+
+  const handleAssessmentCreated = (assessment: { id: string; shareableToken: string; shareableLink: string }) => {
+    // Refresh the page to get updated assessments
+    window.location.reload()
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+  }
+
   return (
     <>
       <FullscreenSimulator />
       {!isFullscreen && (
         <div className="flex gap-5 h-[calc(100vh-200px)]">
-          {/* Fixed Sidebar - Submissions */}
+          {/* Fixed Sidebar - Submissions/Assessments */}
           <aside className="w-[280px] flex-shrink-0 border-r border-neutral-200 pr-5">
-            <h2 className="text-h2 font-medium mb-4 text-neutral-900">Submissions</h2>
-
-            {briefs.length === 0 ? (
-              <EmptyState
-                title="No submissions yet"
-                description="Analyze your first take-home assessment to get started."
-                action={{
-                  label: 'Analyze Submission',
-                  href: '/',
+            {/* Tabs */}
+            <div className="flex items-center gap-1 mb-4 border-b border-neutral-200">
+              <button
+                onClick={() => {
+                  setViewMode('submissions')
+                  setSelectedAssessmentId(null)
+                  setSelectedId(briefs[0]?.id || null)
                 }}
-              />
+                className={`px-3 py-2 text-body-sm font-medium transition-colors duration-base relative ${
+                  viewMode === 'submissions'
+                    ? 'text-primary-600'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
+              >
+                Submissions
+                {viewMode === 'submissions' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 -mb-px" />
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setViewMode('assessments')
+                  setSelectedId(null)
+                  setSelectedAssessmentId(assessmentsList[0]?.id || null)
+                }}
+                className={`px-3 py-2 text-body-sm font-medium transition-colors duration-base relative ${
+                  viewMode === 'assessments'
+                    ? 'text-primary-600'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
+              >
+                Assessments
+                {viewMode === 'assessments' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 -mb-px" />
+                )}
+              </button>
+            </div>
+
+            {viewMode === 'submissions' ? (
+              <>
+                {briefs.length === 0 ? (
+                  <EmptyState
+                    title="No submissions yet"
+                    description="Analyze your first take-home assessment to get started."
+                    action={{
+                      label: 'Analyze Submission',
+                      href: '/',
+                    }}
+                  />
+                ) : (
+                  <div className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-250px)]">
+                    {briefs.map((brief) => {
+                      const isActive = brief.id === selectedId
+                      const subtitle = getSubmissionSubtitle(brief)
+                      return (
+                        <button
+                          key={brief.id}
+                          onClick={() => setSelectedId(brief.id)}
+                          className={`w-full text-left rounded-lg px-3 py-2.5 transition-all duration-base ${
+                            isActive
+                              ? 'bg-neutral-50 border-l-[3px] border-l-primary-600 pl-2.5'
+                              : 'hover:bg-neutral-50 border-l-[3px] border-l-transparent'
+                          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
+                        >
+                          <div className="text-body-lg font-medium truncate text-neutral-900">
+                            {getSubmissionTitle(brief)}
+                          </div>
+                          {subtitle && (
+                            <div className="text-body-sm text-neutral-600 truncate mt-0.5">
+                              {subtitle}
+                            </div>
+                          )}
+                          <div className="text-caption text-neutral-500 mt-1">
+                            {brief.metadata.analyzedAt.toLocaleString()}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
             ) : (
-              <div className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-250px)]">
-                {briefs.map((brief) => {
-                  const isActive = brief.id === selectedId
-                  const subtitle = getSubmissionSubtitle(brief)
-                  return (
+              <>
+                {showCreateAssessment ? (
+                  <div className="mb-4">
+                    <CreateAssessmentForm
+                      onSuccess={handleAssessmentCreated}
+                      onCancel={() => setShowCreateAssessment(false)}
+                    />
+                  </div>
+                ) : (
+                  <>
                     <button
-                      key={brief.id}
-                      onClick={() => setSelectedId(brief.id)}
-                      className={`w-full text-left rounded-lg px-3 py-2.5 transition-all duration-base ${
-                        isActive
-                          ? 'bg-neutral-50 border-l-[3px] border-l-primary-600 pl-2.5'
-                          : 'hover:bg-neutral-50 border-l-[3px] border-l-transparent'
-                      } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
+                      onClick={() => setShowCreateAssessment(true)}
+                      className="w-full mb-4 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium text-body-sm hover:bg-primary-700 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
                     >
-                      <div className="text-body-lg font-medium truncate text-neutral-900">
-                        {getSubmissionTitle(brief)}
-                      </div>
-                      {subtitle && (
-                        <div className="text-body-sm text-neutral-600 truncate mt-0.5">
-                          {subtitle}
-                        </div>
-                      )}
-                      <div className="text-caption text-neutral-500 mt-1">
-                        {brief.metadata.analyzedAt.toLocaleString()}
-                      </div>
+                      + Create Assessment
                     </button>
-                  )
-                })}
-              </div>
+                    {assessmentsList.length === 0 ? (
+                      <EmptyState
+                        title="No assessments yet"
+                        description="Create an assessment to get a shareable link for candidates."
+                      />
+                    ) : (
+                      <div className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-300px)]">
+                        {assessmentsList.map((assessment) => {
+                          const isActive = assessment.id === selectedAssessmentId
+                          return (
+                            <button
+                              key={assessment.id}
+                              onClick={() => setSelectedAssessmentId(assessment.id)}
+                              className={`w-full text-left rounded-lg px-3 py-2.5 transition-all duration-base ${
+                                isActive
+                                  ? 'bg-neutral-50 border-l-[3px] border-l-primary-600 pl-2.5'
+                                  : 'hover:bg-neutral-50 border-l-[3px] border-l-transparent'
+                              } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
+                            >
+                              <div className="text-body-lg font-medium truncate text-neutral-900">
+                                {assessment.title || 'Untitled Assessment'}
+                              </div>
+                              <div className="text-body-sm text-neutral-600 mt-0.5">
+                                {assessment.submissionCount} submission{assessment.submissionCount !== 1 ? 's' : ''}
+                              </div>
+                              <div className="text-caption text-neutral-500 mt-1">
+                                {new Date(assessment.created_at).toLocaleString()}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
             )}
           </aside>
 
@@ -318,7 +443,92 @@ export default function DashboardClient({
 
             {/* Tab Content */}
             <div className="flex-1 overflow-y-auto pr-5">
-              {!selected ? (
+              {viewMode === 'assessments' ? (
+                selectedAssessment ? (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-h1 font-semibold mb-4 text-neutral-900">
+                        {selectedAssessment.title || 'Assessment'}
+                      </h2>
+                      <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 mb-4">
+                        <h3 className="text-body-sm font-medium text-neutral-900 mb-2">Requirements</h3>
+                        <div className="text-body text-neutral-700 whitespace-pre-wrap">
+                          {selectedAssessment.content}
+                        </div>
+                      </div>
+                      {selectedAssessment.shareable_token && (
+                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
+                          <h3 className="text-body-sm font-medium text-primary-900 mb-2">Shareable Link</h3>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              readOnly
+                              value={`${typeof window !== 'undefined' ? window.location.origin : ''}/assessment/${selectedAssessment.shareable_token}`}
+                              className="flex-1 px-3 py-2 border border-primary-300 rounded-lg bg-white text-body text-neutral-900"
+                            />
+                            <button
+                              onClick={() => {
+                                const link = `${typeof window !== 'undefined' ? window.location.origin : ''}/assessment/${selectedAssessment.shareable_token}`
+                                copyToClipboard(link)
+                              }}
+                              className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium text-body-sm hover:bg-primary-700 transition-colors duration-base"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="text-h2 font-medium mb-4 text-neutral-900">
+                          Submissions ({selectedAssessment.submissionCount})
+                        </h3>
+                        {selectedAssessment.submissions.length === 0 ? (
+                          <div className="text-body text-neutral-600 py-8 text-center">
+                            No submissions yet. Share the link above with candidates.
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {selectedAssessment.submissions.map((brief) => {
+                              const subtitle = getSubmissionSubtitle(brief)
+                              return (
+                                <div
+                                  key={brief.id}
+                                  className="border border-neutral-200 rounded-lg p-4 hover:bg-neutral-50 transition-colors duration-base cursor-pointer"
+                                  onClick={() => {
+                                    setViewMode('submissions')
+                                    setSelectedId(brief.id)
+                                  }}
+                                >
+                                  <div className="text-body-lg font-medium text-neutral-900">
+                                    {getSubmissionTitle(brief)}
+                                  </div>
+                                  {subtitle && (
+                                    <div className="text-body-sm text-neutral-600 mt-1">
+                                      {subtitle}
+                                    </div>
+                                  )}
+                                  {brief.metrics && (
+                                    <div className="mt-3">
+                                      <MetricBar value={brief.metrics.overallHireSignal} label="" size="small" />
+                                    </div>
+                                  )}
+                                  <div className="text-caption text-neutral-500 mt-2">
+                                    {brief.metadata.analyzedAt.toLocaleString()}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-body text-neutral-600 py-12">
+                    Select an assessment to view details.
+                  </div>
+                )
+              ) : !selected ? (
                 <div className="text-body text-neutral-600 py-12">
                   Select a submission to view details.
                 </div>

@@ -1,40 +1,71 @@
 // Supabase store operations (ready to wire up)
 
 import { getSupabaseClient, isSupabaseConfigured } from './client';
+import { createServerSupabaseClient } from '../auth/server';
 import { RequirementSpec } from '../requirements/schemas';
 import { GeneratedTestSuite, TestRun } from '../requirements/types';
 import { briefsStore } from '../store'; // Fallback to file store
 
 /**
+ * Generate a unique shareable token
+ */
+function generateShareableToken(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 32; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
+
+/**
  * Create a new prompt
  */
-export async function createPrompt(content: string): Promise<string> {
-  const client = getSupabaseClient();
+export async function createPrompt(
+  content: string, 
+  userId: string, 
+  options?: { title?: string; shareable?: boolean }
+): Promise<{ id: string; shareableToken?: string }> {
+  // Use server-side client with auth context for RLS policies
+  let client;
+  try {
+    client = await createServerSupabaseClient();
+  } catch {
+    // Fallback to regular client if server client fails
+    client = getSupabaseClient();
+  }
   
   if (!client || !isSupabaseConfigured()) {
     // Fallback: generate ID and store in memory/file
     const id = `prompt-${Date.now()}`;
     // TODO: Store in file-based fallback
-    return id;
+    return { id };
   }
+
+  const shareableToken = options?.shareable ? generateShareableToken() : undefined;
 
   const { data, error } = await client
     .from('prompts')
-    .insert({ content })
-    .select('id')
+    .insert({ 
+      content, 
+      user_id: userId,
+      title: options?.title,
+      shareable_token: shareableToken
+    })
+    .select('id, shareable_token')
     .single();
 
   if (error) {
     throw new Error(`Failed to create prompt: ${error.message}`);
   }
 
-  return data.id;
+  return { id: data.id, shareableToken: data.shareable_token };
 }
 
 /**
  * Get prompt by ID
  */
-export async function getPrompt(id: string): Promise<{ id: string; content: string } | null> {
+export async function getPrompt(id: string): Promise<{ id: string; content: string; title?: string; shareable_token?: string } | null> {
   const client = getSupabaseClient();
   
   if (!client || !isSupabaseConfigured()) {
@@ -53,6 +84,77 @@ export async function getPrompt(id: string): Promise<{ id: string; content: stri
   }
 
   return data;
+}
+
+/**
+ * Get prompt by shareable token
+ */
+export async function getPromptByToken(token: string): Promise<{ id: string; content: string; title?: string; user_id: string } | null> {
+  const client = getSupabaseClient();
+  
+  if (!client || !isSupabaseConfigured()) {
+    return null;
+  }
+
+  const { data, error } = await client
+    .from('prompts')
+    .select('id, content, title, user_id')
+    .eq('shareable_token', token)
+    .single();
+
+  if (error) {
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * Get all prompts for a user (assessments)
+ */
+export async function getPromptsByUserId(userId: string) {
+  const client = getSupabaseClient();
+  
+  if (!client || !isSupabaseConfigured()) {
+    return [];
+  }
+
+  const { data, error } = await client
+    .from('prompts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching prompts:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Get submissions for a specific prompt (assessment)
+ */
+export async function getSubmissionsByPromptId(promptId: string) {
+  const client = getSupabaseClient();
+  
+  if (!client || !isSupabaseConfigured()) {
+    return [];
+  }
+
+  const { data, error } = await client
+    .from('submissions')
+    .select('*')
+    .eq('prompt_id', promptId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching submissions:', error);
+    return [];
+  }
+
+  return data || [];
 }
 
 /**
@@ -258,6 +360,7 @@ export async function getTestRun(id: string): Promise<TestRun | null> {
  */
 export async function saveSubmission(
   submissionId: string,
+  userId: string,
   data: {
     promptId?: string;
     githubUrl?: string;
@@ -267,7 +370,14 @@ export async function saveSubmission(
     briefData?: any;
   }
 ): Promise<void> {
-  const client = getSupabaseClient();
+  // Use server-side client with auth context for RLS policies
+  let client;
+  try {
+    client = await createServerSupabaseClient();
+  } catch {
+    // Fallback to regular client if server client fails
+    client = getSupabaseClient();
+  }
   
   if (!client || !isSupabaseConfigured()) {
     // Fallback to existing file store
@@ -281,6 +391,7 @@ export async function saveSubmission(
     .from('submissions')
     .upsert({
       id: submissionId,
+      user_id: userId,
       prompt_id: data.promptId,
       github_url: data.githubUrl,
       video_link: data.videoLink,
@@ -293,5 +404,29 @@ export async function saveSubmission(
   if (error) {
     throw new Error(`Failed to save submission: ${error.message}`);
   }
+}
+
+/**
+ * Get user's submissions
+ */
+export async function getSubmissionsByUserId(userId: string) {
+  const client = getSupabaseClient();
+  
+  if (!client || !isSupabaseConfigured()) {
+    return [];
+  }
+
+  const { data, error } = await client
+    .from('submissions')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching submissions:', error);
+    return [];
+  }
+
+  return data || [];
 }
 

@@ -9,9 +9,10 @@ import { generateBrief, BriefGenerationInput } from '@/lib/brief/generator'
 import { briefsStore } from '@/lib/store'
 import { appendFile } from 'fs/promises'
 import { join } from 'path'
-import { createPrompt, saveSubmission } from '@/lib/supabase/store'
+import { createPrompt, saveSubmission, getPromptByToken } from '@/lib/supabase/store'
 import { extractRequirements, postProcessRequirements } from '@/lib/requirements/extractor'
 import { generateTestSuite } from '@/lib/testing/generator'
+import { getUser } from '@/lib/auth/server'
 
 export async function POST(request: NextRequest) {
   console.log('=== API ROUTE CALLED ===', Date.now());
@@ -33,8 +34,26 @@ export async function POST(request: NextRequest) {
     const videoLink = formData.get('videoLink') as string | null
     const chatExport = formData.get('chatExport') as string | null
     const reflections = formData.get('reflections') as string | null
-    const projectPrompt = formData.get('projectPrompt') as string | null
+    let projectPrompt = formData.get('projectPrompt') as string | null
+    const assessmentToken = formData.get('assessmentToken') as string | null
     const autoGenerateTests = formData.get('autoGenerateTests') === 'true'
+
+    // Verify authentication - allow unauthenticated access if assessmentToken is provided
+    let user = null
+    try {
+      user = await getUser()
+    } catch (authError) {
+      // If auth fails and no assessmentToken, require authentication
+      if (!assessmentToken || !assessmentToken.trim()) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      // If assessmentToken is provided, allow unauthenticated access
+    }
+    
+    // If no assessmentToken and no user, require authentication
+    if (!assessmentToken && !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     // Validate input
     if (!githubUrl && !zipFile) {
@@ -128,27 +147,47 @@ export async function POST(request: NextRequest) {
       // #endregion
       await briefsStore.set(submissionId, brief)
       
-      // Save submission to Supabase (if configured)
-      await saveSubmission(submissionId, {
-        githubUrl: githubUrl || undefined,
-        videoLink: videoLink || undefined,
-        chatExport: chatExport || undefined,
-        reflections: reflections || undefined,
-        briefData: brief,
-      })
+      // Handle assessment token - if provided, get the prompt_id
+      let promptId: string | undefined
+      if (assessmentToken && assessmentToken.trim()) {
+        try {
+          const assessment = await getPromptByToken(assessmentToken.trim())
+          if (assessment) {
+            promptId = assessment.id
+            // Use the assessment content as project prompt if not provided
+            if (!projectPrompt) {
+              projectPrompt = assessment.content
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching assessment:', error)
+        }
+      }
+
+      // Save submission to Supabase (if configured and user is authenticated)
+      if (user) {
+        await saveSubmission(submissionId, user.id, {
+          promptId,
+          githubUrl: githubUrl || undefined,
+          videoLink: videoLink || undefined,
+          chatExport: chatExport || undefined,
+          reflections: reflections || undefined,
+          briefData: brief,
+        })
+      }
 
       // Handle project prompt and auto-generate requirements/tests if provided
-      let promptId: string | undefined
       let requirementSpecId: string | undefined
       let testSuiteId: string | undefined
 
-      if (projectPrompt && projectPrompt.trim()) {
+      if (projectPrompt && projectPrompt.trim() && !promptId && user) {
         try {
-          // Create prompt
-          promptId = await createPrompt(projectPrompt.trim())
+          // Create prompt (only if not already set from assessment token and user is authenticated)
+          const result = await createPrompt(projectPrompt.trim(), user.id, {})
+          promptId = result.id
           
           // Update submission with prompt_id
-          await saveSubmission(submissionId, { promptId })
+          await saveSubmission(submissionId, user.id, { promptId })
 
           if (autoGenerateTests) {
             // Extract requirements

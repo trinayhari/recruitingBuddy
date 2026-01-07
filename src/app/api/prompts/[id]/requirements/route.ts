@@ -3,11 +3,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPrompt, saveRequirementSpec } from '@/lib/supabase/store';
 import { extractRequirements, postProcessRequirements } from '@/lib/requirements/extractor';
+import { getUser } from '@/lib/auth/server';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Verify authentication
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const promptId = params.id;
 

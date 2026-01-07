@@ -5,11 +5,18 @@ import { getRequirementSpec, getPrompt } from '@/lib/supabase/store';
 import { saveTestSuite } from '@/lib/supabase/store';
 import { generateTestSuite } from '@/lib/testing/generator';
 import { performStaticAnalysis } from '@/lib/analysis/staticAnalysis';
+import { getUser } from '@/lib/auth/server';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Verify authentication
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const promptId = params.id;
     const body = await request.json();

@@ -11,12 +11,19 @@ import {
   calculateConfidenceScore,
 } from '@/lib/scoring/calculator';
 import { getRequirementSpec } from '@/lib/supabase/store';
+import { getUser } from '@/lib/auth/server';
 
 // POST - Start test execution
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Verify authentication
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const submissionId = params.id;
     const body = await request.json();
@@ -87,6 +94,12 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Verify authentication
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const submissionId = params.id;
     const { searchParams } = new URL(request.url);

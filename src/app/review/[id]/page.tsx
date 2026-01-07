@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import TLDRSection from '@/components/ReviewerBrief/TLDRSection'
 import WorkStyleSection from '@/components/ReviewerBrief/WorkStyleSection'
@@ -9,6 +9,8 @@ import { ReviewerBrief } from '@/lib/types'
 import { briefsStore } from '@/lib/store'
 import { appendFile } from 'fs/promises'
 import { join } from 'path'
+import { getUser } from '@/lib/auth/server'
+import { getSupabaseClient } from '@/lib/supabase/client'
 
 export async function generateStaticParams() {
   return []
@@ -37,6 +39,27 @@ async function getBrief(id: string): Promise<ReviewerBrief | null> {
 export default async function ReviewPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
   // Handle both Promise and direct params (Next.js 14 compatibility)
   const resolvedParams = await Promise.resolve(params)
+  
+  // Verify authentication
+  const user = await getUser()
+  if (!user) {
+    redirect(`/login?redirect=/review/${resolvedParams.id}`)
+  }
+
+  // Check ownership if submission exists in Supabase
+  const client = getSupabaseClient()
+  if (client) {
+    const { data: submission } = await client
+      .from('submissions')
+      .select('user_id')
+      .eq('id', resolvedParams.id)
+      .single()
+
+    if (submission && submission.user_id !== user.id) {
+      notFound() // Return 404 instead of 403 to avoid leaking existence
+    }
+  }
+
   // #region agent log
   const logPath = join(process.cwd(), '.cursor', 'debug.log');
   const storeKeys = await briefsStore.keys();
@@ -84,7 +107,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
         <div className="mt-8 text-center">
           <div className="flex items-center justify-center gap-6">
             <Link
-              href="/"
+              href="/submit"
               className="text-body-sm text-primary-600 hover:text-primary-700 font-medium transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded inline-flex items-center"
             >
               ← Analyze another submission
