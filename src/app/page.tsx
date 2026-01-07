@@ -1,5 +1,6 @@
 import Hero from '@/components/Landing/Hero'
 import Features from '@/components/Landing/Features'
+import WorkflowSection from '@/components/Landing/WorkflowSection'
 import CTASection from '@/components/Landing/CTASection'
 
 export default function Home() {
@@ -8,6 +9,7 @@ export default function Home() {
       <div className="max-w-6xl mx-auto px-6 lg:px-12">
         <Hero />
         <Features />
+        <WorkflowSection />
         <CTASection />
       </div>
     </main>
