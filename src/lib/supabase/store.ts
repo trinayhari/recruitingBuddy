@@ -134,6 +134,67 @@ export async function getPromptsByUserId(userId: string) {
 }
 
 /**
+ * Update a prompt (assessment)
+ */
+export async function updatePrompt(
+  promptId: string,
+  userId: string,
+  updates: { title?: string; content?: string }
+): Promise<void> {
+  // Use server-side client with auth context for RLS policies
+  let client;
+  try {
+    client = await createServerSupabaseClient();
+  } catch {
+    client = getSupabaseClient();
+  }
+  
+  if (!client || !isSupabaseConfigured()) {
+    throw new Error('Supabase not configured');
+  }
+
+  const { error } = await client
+    .from('prompts')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', promptId)
+    .eq('user_id', userId); // Ensure user owns the prompt
+
+  if (error) {
+    throw new Error(`Failed to update prompt: ${error.message}`);
+  }
+}
+
+/**
+ * Delete a prompt (assessment)
+ */
+export async function deletePrompt(promptId: string, userId: string): Promise<void> {
+  // Use server-side client with auth context for RLS policies
+  let client;
+  try {
+    client = await createServerSupabaseClient();
+  } catch {
+    client = getSupabaseClient();
+  }
+  
+  if (!client || !isSupabaseConfigured()) {
+    throw new Error('Supabase not configured');
+  }
+
+  const { error } = await client
+    .from('prompts')
+    .delete()
+    .eq('id', promptId)
+    .eq('user_id', userId); // Ensure user owns the prompt
+
+  if (error) {
+    throw new Error(`Failed to delete prompt: ${error.message}`);
+  }
+}
+
+/**
  * Get submissions for a specific prompt (assessment)
  */
 export async function getSubmissionsByPromptId(promptId: string) {

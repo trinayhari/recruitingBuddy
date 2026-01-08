@@ -1,89 +1,93 @@
-'use client'
+"use client";
 
-import { useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
-import type { ReviewerBrief } from '@/lib/types'
-import MetricsPanel from './MetricsPanel'
-import MetricBar from '../MetricBar'
-import EmptyState from '../EmptyState'
-import CreateAssessmentForm from '../Assessment/CreateAssessmentForm'
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import type { ReviewerBrief } from "@/lib/types";
+import MetricsPanel from "./MetricsPanel";
+import MetricBar from "../MetricBar";
+import EmptyState from "../EmptyState";
+import CreateAssessmentForm from "../Assessment/CreateAssessmentForm";
+import EditAssessmentForm from "../Assessment/EditAssessmentForm";
 
-type SimulatorProvider = 'stackblitz' | 'codesandbox'
+type SimulatorProvider = "stackblitz" | "codesandbox";
 
-function parseGitHubRepo(githubUrl?: string): { owner: string; repo: string } | null {
-  if (!githubUrl) return null
+function parseGitHubRepo(
+  githubUrl?: string
+): { owner: string; repo: string } | null {
+  if (!githubUrl) return null;
 
   try {
-    const url = new URL(githubUrl)
-    if (url.hostname !== 'github.com' && url.hostname !== 'www.github.com') return null
+    const url = new URL(githubUrl);
+    if (url.hostname !== "github.com" && url.hostname !== "www.github.com")
+      return null;
 
-    const parts = url.pathname.split('/').filter(Boolean)
-    if (parts.length < 2) return null
+    const parts = url.pathname.split("/").filter(Boolean);
+    if (parts.length < 2) return null;
 
-    const owner = parts[0]
-    const repo = parts[1].replace(/\.git$/, '')
-    if (!owner || !repo) return null
+    const owner = parts[0];
+    const repo = parts[1].replace(/\.git$/, "");
+    if (!owner || !repo) return null;
 
-    return { owner, repo }
+    return { owner, repo };
   } catch {
-    return null
+    return null;
   }
 }
 
 function getSubmissionTitle(brief: ReviewerBrief): string {
-  const repo = parseGitHubRepo(brief.artifacts.githubUrl)
-  if (repo) return repo.repo
-  return brief.tldr.delivered || 'Submission'
+  const repo = parseGitHubRepo(brief.artifacts.githubUrl);
+  if (repo) return repo.repo;
+  return brief.tldr.delivered || "Submission";
 }
 
 function getSubmissionSubtitle(brief: ReviewerBrief): string | null {
-  const repo = parseGitHubRepo(brief.artifacts.githubUrl)
-  if (repo) return `${repo.owner}/${repo.repo}`
-  return null
+  const repo = parseGitHubRepo(brief.artifacts.githubUrl);
+  if (repo) return `${repo.owner}/${repo.repo}`;
+  return null;
 }
 
 function buildStackBlitzEmbedUrl(githubUrl?: string): string | null {
-  const repo = parseGitHubRepo(githubUrl)
-  if (!repo) return null
+  const repo = parseGitHubRepo(githubUrl);
+  if (!repo) return null;
 
-  const base = `https://stackblitz.com/github/${repo.owner}/${repo.repo}`
+  const base = `https://stackblitz.com/github/${repo.owner}/${repo.repo}`;
   const params = new URLSearchParams({
-    embed: '1',
-    hideExplorer: '0',
-    hideNavigation: '1',
-    terminalHeight: '30',
-    view: 'preview',
-  })
+    embed: "1",
+    hideExplorer: "0",
+    hideNavigation: "1",
+    terminalHeight: "30",
+    view: "preview",
+  });
 
-  return `${base}?${params.toString()}`
+  return `${base}?${params.toString()}`;
 }
 
 function buildCodeSandboxEmbedUrl(githubUrl?: string): string | null {
-  const repo = parseGitHubRepo(githubUrl)
-  if (!repo) return null
+  const repo = parseGitHubRepo(githubUrl);
+  if (!repo) return null;
 
-  const base = `https://codesandbox.io/embed/github/${repo.owner}/${repo.repo}`
+  const base = `https://codesandbox.io/embed/github/${repo.owner}/${repo.repo}`;
   const params = new URLSearchParams({
-    view: 'preview',
-    hidenavigation: '1',
-    fontsize: '14',
-    codemirror: '1',
-  })
+    view: "preview",
+    hidenavigation: "1",
+    fontsize: "14",
+    codemirror: "1",
+  });
 
-  return `${base}?${params.toString()}`
+  return `${base}?${params.toString()}`;
 }
 
-type ActiveTab = 'analysis' | 'simulator'
-type ViewMode = 'submissions' | 'assessments'
+type ActiveTab = "analysis" | "simulator";
+type ViewMode = "submissions" | "assessments";
 
 interface Assessment {
-  id: string
-  title?: string
-  content: string
-  shareable_token?: string
-  created_at: string
-  submissions: ReviewerBrief[]
-  submissionCount: number
+  id: string;
+  title?: string;
+  content: string;
+  shareable_token?: string;
+  created_at: string;
+  submissions: ReviewerBrief[];
+  submissionCount: number;
 }
 
 export default function DashboardClient({
@@ -91,82 +95,88 @@ export default function DashboardClient({
   assessments = [],
   initialSelectedId,
 }: {
-  briefs: ReviewerBrief[]
-  assessments?: Assessment[]
-  initialSelectedId?: string | null
+  briefs: ReviewerBrief[];
+  assessments?: Assessment[];
+  initialSelectedId?: string | null;
 }) {
-  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId || briefs[0]?.id || null)
-  const [provider, setProvider] = useState<SimulatorProvider>('codesandbox')
-  const [activeTab, setActiveTab] = useState<ActiveTab>('analysis')
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [viewMode, setViewMode] = useState<ViewMode>('submissions')
-  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null)
-  const [showCreateAssessment, setShowCreateAssessment] = useState(false)
-  const [assessmentsList, setAssessmentsList] = useState<Assessment[]>(assessments)
+  const [selectedId, setSelectedId] = useState<string | null>(
+    initialSelectedId || briefs[0]?.id || null
+  );
+  const [provider, setProvider] = useState<SimulatorProvider>("codesandbox");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("analysis");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("submissions");
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<
+    string | null
+  >(null);
+  const [showCreateAssessment, setShowCreateAssessment] = useState(false);
+  const [showEditAssessment, setShowEditAssessment] = useState(false);
+  const [assessmentsList, setAssessmentsList] =
+    useState<Assessment[]>(assessments);
 
   const selected = useMemo(
     () => briefs.find((b) => b.id === selectedId) || null,
     [briefs, selectedId]
-  )
+  );
 
   const isLikelyNextProject = useMemo(() => {
-    const stack = selected?.tldr.stack || []
-    return stack.some((s) => /next/i.test(s))
-  }, [selected?.tldr.stack])
+    const stack = selected?.tldr.stack || [];
+    return stack.some((s) => /next/i.test(s));
+  }, [selected?.tldr.stack]);
 
   // StackBlitz can fail for some Next.js projects due to turbopack limitations in WASM environments.
   // Default to CodeSandbox for those repos.
   useEffect(() => {
-    if (!selected) return
-    if (isLikelyNextProject && provider === 'stackblitz') {
-      setProvider('codesandbox')
+    if (!selected) return;
+    if (isLikelyNextProject && provider === "stackblitz") {
+      setProvider("codesandbox");
     }
-  }, [isLikelyNextProject, provider, selected])
+  }, [isLikelyNextProject, provider, selected]);
 
   const stackBlitzUrl = useMemo(
     () => buildStackBlitzEmbedUrl(selected?.artifacts.githubUrl),
     [selected?.artifacts.githubUrl]
-  )
+  );
 
   const codeSandboxUrl = useMemo(
     () => buildCodeSandboxEmbedUrl(selected?.artifacts.githubUrl),
     [selected?.artifacts.githubUrl]
-  )
+  );
 
   const stackBlitzProjectUrl = useMemo(() => {
-    const repo = parseGitHubRepo(selected?.artifacts.githubUrl)
-    if (!repo) return null
-    return `https://stackblitz.com/github/${repo.owner}/${repo.repo}`
-  }, [selected?.artifacts.githubUrl])
+    const repo = parseGitHubRepo(selected?.artifacts.githubUrl);
+    if (!repo) return null;
+    return `https://stackblitz.com/github/${repo.owner}/${repo.repo}`;
+  }, [selected?.artifacts.githubUrl]);
 
   const codeSandboxProjectUrl = useMemo(() => {
-    const repo = parseGitHubRepo(selected?.artifacts.githubUrl)
-    if (!repo) return null
-    return `https://codesandbox.io/s/github/${repo.owner}/${repo.repo}`
-  }, [selected?.artifacts.githubUrl])
+    const repo = parseGitHubRepo(selected?.artifacts.githubUrl);
+    if (!repo) return null;
+    return `https://codesandbox.io/s/github/${repo.owner}/${repo.repo}`;
+  }, [selected?.artifacts.githubUrl]);
 
-  const embedUrl = provider === 'stackblitz' ? stackBlitzUrl : codeSandboxUrl
+  const embedUrl = provider === "stackblitz" ? stackBlitzUrl : codeSandboxUrl;
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 's' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setActiveTab(activeTab === 'analysis' ? 'simulator' : 'analysis')
+      if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setActiveTab(activeTab === "analysis" ? "simulator" : "analysis");
       }
-      if (e.key === 'Escape' && isFullscreen) {
-        setIsFullscreen(false)
+      if (e.key === "Escape" && isFullscreen) {
+        setIsFullscreen(false);
       }
-    }
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [activeTab, isFullscreen])
+    };
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [activeTab, isFullscreen]);
 
   // Fullscreen overlay component
   const FullscreenSimulator = () => {
-    if (!isFullscreen || !selected?.artifacts.githubUrl) return null
+    if (!isFullscreen || !selected?.artifacts.githubUrl) return null;
 
-    const repo = parseGitHubRepo(selected.artifacts.githubUrl)
+    const repo = parseGitHubRepo(selected.artifacts.githubUrl);
 
     return (
       <div className="fixed inset-0 z-50 bg-neutral-900 flex flex-col">
@@ -183,24 +193,30 @@ export default function DashboardClient({
             {/* Provider Toggle */}
             <div className="flex items-center gap-2 bg-neutral-700 rounded-lg p-1">
               <button
-                onClick={() => setProvider('codesandbox')}
+                onClick={() => setProvider("codesandbox")}
                 className={`px-3 py-1.5 text-body-sm font-medium rounded transition-colors duration-base ${
-                  provider === 'codesandbox'
-                    ? 'bg-neutral-600 text-white'
-                    : 'text-neutral-300 hover:text-white'
+                  provider === "codesandbox"
+                    ? "bg-neutral-600 text-white"
+                    : "text-neutral-300 hover:text-white"
                 } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500`}
               >
                 CodeSandbox
               </button>
               <button
-                onClick={() => setProvider('stackblitz')}
+                onClick={() => setProvider("stackblitz")}
                 disabled={isLikelyNextProject}
                 className={`px-3 py-1.5 text-body-sm font-medium rounded transition-colors duration-base ${
-                  provider === 'stackblitz'
-                    ? 'bg-neutral-600 text-white'
-                    : 'text-neutral-300 hover:text-white'
-                } ${isLikelyNextProject ? 'opacity-50 cursor-not-allowed' : ''} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500`}
-                title={isLikelyNextProject ? 'Not recommended for Next.js projects' : ''}
+                  provider === "stackblitz"
+                    ? "bg-neutral-600 text-white"
+                    : "text-neutral-300 hover:text-white"
+                } ${
+                  isLikelyNextProject ? "opacity-50 cursor-not-allowed" : ""
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500`}
+                title={
+                  isLikelyNextProject
+                    ? "Not recommended for Next.js projects"
+                    : ""
+                }
               >
                 StackBlitz
               </button>
@@ -237,29 +253,38 @@ export default function DashboardClient({
         <div className="flex-1 relative">
           <iframe
             title="Repo Simulator"
-            src={embedUrl || ''}
+            src={embedUrl || ""}
             className="w-full h-full"
             allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
             sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
           />
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   const selectedAssessment = useMemo(
     () => assessmentsList.find((a) => a.id === selectedAssessmentId) || null,
     [assessmentsList, selectedAssessmentId]
-  )
+  );
 
-  const handleAssessmentCreated = (assessment: { id: string; shareableToken: string; shareableLink: string }) => {
+  const handleAssessmentCreated = (assessment: {
+    id: string;
+    shareableToken: string;
+    shareableLink: string;
+  }) => {
     // Refresh the page to get updated assessments
-    window.location.reload()
-  }
+    window.location.reload();
+  };
+
+  const handleAssessmentUpdated = () => {
+    // Refresh the page to get updated assessments and submissions
+    window.location.reload();
+  };
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-  }
+    navigator.clipboard.writeText(text);
+  };
 
   return (
     <>
@@ -272,64 +297,68 @@ export default function DashboardClient({
             <div className="flex items-center gap-1 mb-4 border-b border-neutral-200">
               <button
                 onClick={() => {
-                  setViewMode('submissions')
-                  setSelectedAssessmentId(null)
-                  setSelectedId(briefs[0]?.id || null)
+                  setViewMode("submissions");
+                  setSelectedAssessmentId(null);
+                  setShowCreateAssessment(false);
+                  setShowEditAssessment(false);
+                  setSelectedId(briefs[0]?.id || null);
                 }}
                 className={`px-3 py-2 text-body-sm font-medium transition-colors duration-base relative ${
-                  viewMode === 'submissions'
-                    ? 'text-primary-600'
-                    : 'text-neutral-600 hover:text-neutral-900'
+                  viewMode === "submissions"
+                    ? "text-primary-600"
+                    : "text-neutral-600 hover:text-neutral-900"
                 } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
               >
                 Submissions
-                {viewMode === 'submissions' && (
+                {viewMode === "submissions" && (
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 -mb-px" />
                 )}
               </button>
               <button
                 onClick={() => {
-                  setViewMode('assessments')
-                  setSelectedId(null)
-                  setSelectedAssessmentId(assessmentsList[0]?.id || null)
+                  setViewMode("assessments");
+                  setSelectedId(null);
+                  setShowCreateAssessment(false);
+                  setShowEditAssessment(false);
+                  setSelectedAssessmentId(assessmentsList[0]?.id || null);
                 }}
                 className={`px-3 py-2 text-body-sm font-medium transition-colors duration-base relative ${
-                  viewMode === 'assessments'
-                    ? 'text-primary-600'
-                    : 'text-neutral-600 hover:text-neutral-900'
+                  viewMode === "assessments"
+                    ? "text-primary-600"
+                    : "text-neutral-600 hover:text-neutral-900"
                 } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
               >
                 Assessments
-                {viewMode === 'assessments' && (
+                {viewMode === "assessments" && (
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 -mb-px" />
                 )}
               </button>
             </div>
 
-            {viewMode === 'submissions' ? (
+            {viewMode === "submissions" ? (
               <>
                 {briefs.length === 0 ? (
                   <EmptyState
                     title="No submissions yet"
                     description="Analyze your first take-home assessment to get started."
                     action={{
-                      label: 'Analyze Submission',
-                      href: '/',
+                      label: "Analyze Submission",
+                      href: "/",
                     }}
                   />
                 ) : (
                   <div className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-250px)]">
                     {briefs.map((brief) => {
-                      const isActive = brief.id === selectedId
-                      const subtitle = getSubmissionSubtitle(brief)
+                      const isActive = brief.id === selectedId;
+                      const subtitle = getSubmissionSubtitle(brief);
                       return (
                         <button
                           key={brief.id}
                           onClick={() => setSelectedId(brief.id)}
                           className={`w-full text-left rounded-lg px-3 py-2.5 transition-all duration-base ${
                             isActive
-                              ? 'bg-neutral-50 border-l-[3px] border-l-primary-600 pl-2.5'
-                              : 'hover:bg-neutral-50 border-l-[3px] border-l-transparent'
+                              ? "bg-neutral-50 border-l-[3px] border-l-primary-600 pl-2.5"
+                              : "hover:bg-neutral-50 border-l-[3px] border-l-transparent"
                           } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
                         >
                           <div className="text-body-lg font-medium truncate text-neutral-900">
@@ -344,7 +373,7 @@ export default function DashboardClient({
                             {brief.metadata.analyzedAt.toLocaleString()}
                           </div>
                         </button>
-                      )
+                      );
                     })}
                   </div>
                 )}
@@ -355,14 +384,17 @@ export default function DashboardClient({
                   <div className="mb-4">
                     <CreateAssessmentForm
                       onSuccess={handleAssessmentCreated}
-                      onCancel={() => setShowCreateAssessment(false)}
+                      onCancel={() => {
+                        setShowCreateAssessment(false);
+                        setShowEditAssessment(false);
+                      }}
                     />
                   </div>
                 ) : (
                   <>
                     <button
                       onClick={() => setShowCreateAssessment(true)}
-                      className="w-full mb-4 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium text-body-sm hover:bg-primary-700 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                      className="w-full mb-4 px-4 py-2 bg-primary-600 text-black rounded-lg font-medium text-body-sm hover:bg-primary-700 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
                     >
                       + Create Assessment
                     </button>
@@ -374,28 +406,34 @@ export default function DashboardClient({
                     ) : (
                       <div className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-300px)]">
                         {assessmentsList.map((assessment) => {
-                          const isActive = assessment.id === selectedAssessmentId
+                          const isActive =
+                            assessment.id === selectedAssessmentId;
                           return (
                             <button
                               key={assessment.id}
-                              onClick={() => setSelectedAssessmentId(assessment.id)}
+                              onClick={() =>
+                                setSelectedAssessmentId(assessment.id)
+                              }
                               className={`w-full text-left rounded-lg px-3 py-2.5 transition-all duration-base ${
                                 isActive
-                                  ? 'bg-neutral-50 border-l-[3px] border-l-primary-600 pl-2.5'
-                                  : 'hover:bg-neutral-50 border-l-[3px] border-l-transparent'
+                                  ? "bg-neutral-50 border-l-[3px] border-l-primary-600 pl-2.5"
+                                  : "hover:bg-neutral-50 border-l-[3px] border-l-transparent"
                               } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
                             >
                               <div className="text-body-lg font-medium truncate text-neutral-900">
-                                {assessment.title || 'Untitled Assessment'}
+                                {assessment.title || "Untitled Assessment"}
                               </div>
                               <div className="text-body-sm text-neutral-600 mt-0.5">
-                                {assessment.submissionCount} submission{assessment.submissionCount !== 1 ? 's' : ''}
+                                {assessment.submissionCount} submission
+                                {assessment.submissionCount !== 1 ? "s" : ""}
                               </div>
                               <div className="text-caption text-neutral-500 mt-1">
-                                {new Date(assessment.created_at).toLocaleString()}
+                                {new Date(
+                                  assessment.created_at
+                                ).toLocaleString()}
                               </div>
                             </button>
-                          )
+                          );
                         })}
                       </div>
                     )}
@@ -411,29 +449,29 @@ export default function DashboardClient({
             {selected && (
               <div className="flex items-center gap-1 mb-4 border-b border-neutral-200">
                 <button
-                  onClick={() => setActiveTab('analysis')}
+                  onClick={() => setActiveTab("analysis")}
                   className={`px-4 py-2 text-body font-medium transition-colors duration-base relative ${
-                    activeTab === 'analysis'
-                      ? 'text-primary-600'
-                      : 'text-neutral-600 hover:text-neutral-900'
+                    activeTab === "analysis"
+                      ? "text-primary-600"
+                      : "text-neutral-600 hover:text-neutral-900"
                   } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded-t`}
                 >
                   Analysis
-                  {activeTab === 'analysis' && (
+                  {activeTab === "analysis" && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 -mb-px" />
                   )}
                 </button>
                 {selected.artifacts.githubUrl && (
                   <button
-                    onClick={() => setActiveTab('simulator')}
+                    onClick={() => setActiveTab("simulator")}
                     className={`px-4 py-2 text-body font-medium transition-colors duration-base relative ${
-                      activeTab === 'simulator'
-                        ? 'text-primary-600'
-                        : 'text-neutral-600 hover:text-neutral-900'
+                      activeTab === "simulator"
+                        ? "text-primary-600"
+                        : "text-neutral-600 hover:text-neutral-900"
                     } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded-t`}
                   >
                     Try It Out
-                    {activeTab === 'simulator' && (
+                    {activeTab === "simulator" && (
                       <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 -mb-px" />
                     )}
                   </button>
@@ -443,33 +481,63 @@ export default function DashboardClient({
 
             {/* Tab Content */}
             <div className="flex-1 overflow-y-auto pr-5">
-              {viewMode === 'assessments' ? (
+              {viewMode === "assessments" ? (
                 selectedAssessment ? (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-h1 font-semibold mb-4 text-neutral-900">
-                        {selectedAssessment.title || 'Assessment'}
-                      </h2>
+                  showEditAssessment ? (
+                    <EditAssessmentForm
+                      assessment={selectedAssessment}
+                      onSuccess={handleAssessmentUpdated}
+                      onCancel={() => setShowEditAssessment(false)}
+                    />
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="flex items-start justify-between">
+                        <h2 className="text-h1 font-semibold text-neutral-900">
+                          {selectedAssessment.title || "Assessment"}
+                        </h2>
+                        <button
+                          onClick={() => setShowEditAssessment(true)}
+                          className="px-4 py-2 border border-neutral-300 rounded-lg font-medium text-body-sm text-neutral-700 hover:bg-neutral-50 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                        >
+                          Edit
+                        </button>
+                      </div>
                       <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 mb-4">
-                        <h3 className="text-body-sm font-medium text-neutral-900 mb-2">Requirements</h3>
+                        <h3 className="text-body-sm font-medium text-neutral-900 mb-2">
+                          Requirements
+                        </h3>
                         <div className="text-body text-neutral-700 whitespace-pre-wrap">
                           {selectedAssessment.content}
                         </div>
                       </div>
                       {selectedAssessment.shareable_token && (
                         <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
-                          <h3 className="text-body-sm font-medium text-primary-900 mb-2">Shareable Link</h3>
+                          <h3 className="text-body-sm font-medium text-primary-900 mb-2">
+                            Shareable Link
+                          </h3>
                           <div className="flex items-center gap-2">
                             <input
                               type="text"
                               readOnly
-                              value={`${typeof window !== 'undefined' ? window.location.origin : ''}/assessment/${selectedAssessment.shareable_token}`}
-                              className="flex-1 px-3 py-2 border border-primary-300 rounded-lg bg-white text-body text-neutral-900"
+                              value={`${
+                                typeof window !== "undefined"
+                                  ? window.location.origin
+                                  : ""
+                              }/assessment/${
+                                selectedAssessment.shareable_token
+                              }`}
+                              className="flex-1 px-3 py-2 border border-primary-300 rounded-lg bg-white text-body text-neutral-900 placeholder:text-neutral-400"
                             />
                             <button
                               onClick={() => {
-                                const link = `${typeof window !== 'undefined' ? window.location.origin : ''}/assessment/${selectedAssessment.shareable_token}`
-                                copyToClipboard(link)
+                                const link = `${
+                                  typeof window !== "undefined"
+                                    ? window.location.origin
+                                    : ""
+                                }/assessment/${
+                                  selectedAssessment.shareable_token
+                                }`;
+                                copyToClipboard(link);
                               }}
                               className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium text-body-sm hover:bg-primary-700 transition-colors duration-base"
                             >
@@ -484,19 +552,20 @@ export default function DashboardClient({
                         </h3>
                         {selectedAssessment.submissions.length === 0 ? (
                           <div className="text-body text-neutral-600 py-8 text-center">
-                            No submissions yet. Share the link above with candidates.
+                            No submissions yet. Share the link above with
+                            candidates.
                           </div>
                         ) : (
                           <div className="space-y-4">
                             {selectedAssessment.submissions.map((brief) => {
-                              const subtitle = getSubmissionSubtitle(brief)
+                              const subtitle = getSubmissionSubtitle(brief);
                               return (
                                 <div
                                   key={brief.id}
                                   className="border border-neutral-200 rounded-lg p-4 hover:bg-neutral-50 transition-colors duration-base cursor-pointer"
                                   onClick={() => {
-                                    setViewMode('submissions')
-                                    setSelectedId(brief.id)
+                                    setViewMode("submissions");
+                                    setSelectedId(brief.id);
                                   }}
                                 >
                                   <div className="text-body-lg font-medium text-neutral-900">
@@ -509,20 +578,24 @@ export default function DashboardClient({
                                   )}
                                   {brief.metrics && (
                                     <div className="mt-3">
-                                      <MetricBar value={brief.metrics.overallHireSignal} label="" size="small" />
+                                      <MetricBar
+                                        value={brief.metrics.overallHireSignal}
+                                        label=""
+                                        size="small"
+                                      />
                                     </div>
                                   )}
                                   <div className="text-caption text-neutral-500 mt-2">
                                     {brief.metadata.analyzedAt.toLocaleString()}
                                   </div>
                                 </div>
-                              )
+                              );
                             })}
                           </div>
                         )}
                       </div>
                     </div>
-                  </div>
+                  )
                 ) : (
                   <div className="text-body text-neutral-600 py-12">
                     Select an assessment to view details.
@@ -532,44 +605,71 @@ export default function DashboardClient({
                 <div className="text-body text-neutral-600 py-12">
                   Select a submission to view details.
                 </div>
-              ) : activeTab === 'analysis' ? (
+              ) : activeTab === "analysis" ? (
                 <div className="space-y-6 transition-opacity duration-200">
                   <div>
-                    <h2 className="text-h1 font-semibold mb-4 text-neutral-900">Summary</h2>
+                    <h2 className="text-h1 font-semibold mb-4 text-neutral-900">
+                      Summary
+                    </h2>
                     <dl className="space-y-4">
                       {selected.tldr.task && (
                         <div>
-                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">Task</dt>
-                          <dd className="text-body text-neutral-900">{selected.tldr.task}</dd>
+                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">
+                            Task
+                          </dt>
+                          <dd className="text-body text-neutral-900">
+                            {selected.tldr.task}
+                          </dd>
                         </div>
                       )}
                       {selected.tldr.delivered && (
                         <div>
-                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">Delivered</dt>
-                          <dd className="text-body text-neutral-900">{selected.tldr.delivered}</dd>
+                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">
+                            Delivered
+                          </dt>
+                          <dd className="text-body text-neutral-900">
+                            {selected.tldr.delivered}
+                          </dd>
                         </div>
                       )}
-                      {selected.tldr.stack && selected.tldr.stack.length > 0 && (
-                        <div>
-                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">Stack</dt>
-                          <dd className="text-body text-neutral-900">{selected.tldr.stack.join(', ')}</dd>
-                        </div>
-                      )}
+                      {selected.tldr.stack &&
+                        selected.tldr.stack.length > 0 && (
+                          <div>
+                            <dt className="text-body-sm font-medium text-neutral-600 mb-1">
+                              Stack
+                            </dt>
+                            <dd className="text-body text-neutral-900">
+                              {selected.tldr.stack.join(", ")}
+                            </dd>
+                          </div>
+                        )}
                       {selected.metrics && (
                         <div>
-                          <dt className="text-body-sm font-medium text-neutral-600 mb-2">Hire Signal</dt>
+                          <dt className="text-body-sm font-medium text-neutral-600 mb-2">
+                            Hire Signal
+                          </dt>
                           <dd>
-                            <MetricBar value={selected.metrics.overallHireSignal} label="" size="medium" />
+                            <MetricBar
+                              value={selected.metrics.overallHireSignal}
+                              label=""
+                              size="medium"
+                            />
                             {selected.metrics.redFlags.length > 0 && (
                               <p className="text-body-sm text-signal-low mt-1">
-                                {selected.metrics.redFlags.length} red flag{selected.metrics.redFlags.length !== 1 ? 's' : ''} detected
+                                {selected.metrics.redFlags.length} red flag
+                                {selected.metrics.redFlags.length !== 1
+                                  ? "s"
+                                  : ""}{" "}
+                                detected
                               </p>
                             )}
                           </dd>
                         </div>
                       )}
                       <div>
-                        <dt className="text-body-sm font-medium text-neutral-600 mb-1">Review</dt>
+                        <dt className="text-body-sm font-medium text-neutral-600 mb-1">
+                          Review
+                        </dt>
                         <dd>
                           <Link
                             href={`/review/${selected.id}`}
@@ -581,7 +681,9 @@ export default function DashboardClient({
                       </div>
                       {selected.artifacts.githubUrl && (
                         <div>
-                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">GitHub</dt>
+                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">
+                            GitHub
+                          </dt>
                           <dd>
                             <a
                               href={selected.artifacts.githubUrl}
@@ -602,110 +704,120 @@ export default function DashboardClient({
                     <MetricsPanel metrics={selected.metrics} />
                   )}
                 </div>
+              ) : /* Simulator Tab Content */
+              !selected.artifacts.githubUrl ? (
+                <div className="text-body text-neutral-600 py-12 transition-opacity duration-200">
+                  No GitHub URL was provided for this submission. (Zip uploads
+                  can't be simulated.)
+                </div>
+              ) : !codeSandboxUrl && !stackBlitzUrl ? (
+                <div className="text-body text-neutral-600 py-12 transition-opacity duration-200">
+                  Could not parse GitHub URL for sandbox preview.
+                </div>
               ) : (
-                /* Simulator Tab Content */
-                !selected.artifacts.githubUrl ? (
-                  <div className="text-body text-neutral-600 py-12 transition-opacity duration-200">
-                    No GitHub URL was provided for this submission. (Zip uploads can't be simulated.)
-                  </div>
-                ) : !codeSandboxUrl && !stackBlitzUrl ? (
-                  <div className="text-body text-neutral-600 py-12 transition-opacity duration-200">
-                    Could not parse GitHub URL for sandbox preview.
-                  </div>
-                ) : (
-                  <div className="space-y-4 transition-opacity duration-200">
-                    <div className="flex items-center justify-between">
-                      <div className="text-caption text-neutral-500">
-                        Embedded preview: {parseGitHubRepo(selected.artifacts.githubUrl)?.owner}/
-                        {parseGitHubRepo(selected.artifacts.githubUrl)?.repo}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {/* Provider Toggle */}
-                        <div className="flex items-center gap-2 bg-neutral-100 rounded-lg p-1">
-                          <button
-                            onClick={() => setProvider('codesandbox')}
-                            className={`px-3 py-1.5 text-body-sm font-medium rounded transition-colors duration-base ${
-                              provider === 'codesandbox'
-                                ? 'bg-white text-primary-600 shadow-sm'
-                                : 'text-neutral-600 hover:text-neutral-900'
-                            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
-                          >
-                            CodeSandbox
-                          </button>
-                          <button
-                            onClick={() => setProvider('stackblitz')}
-                            disabled={isLikelyNextProject}
-                            className={`px-3 py-1.5 text-body-sm font-medium rounded transition-colors duration-base ${
-                              provider === 'stackblitz'
-                                ? 'bg-white text-primary-600 shadow-sm'
-                                : 'text-neutral-600 hover:text-neutral-900'
-                            } ${isLikelyNextProject ? 'opacity-50 cursor-not-allowed' : ''} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
-                            title={isLikelyNextProject ? 'Not recommended for Next.js projects' : ''}
-                          >
-                            StackBlitz
-                          </button>
-                        </div>
-                        {/* Fullscreen Button */}
+                <div className="space-y-4 transition-opacity duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="text-caption text-neutral-500">
+                      Embedded preview:{" "}
+                      {parseGitHubRepo(selected.artifacts.githubUrl)?.owner}/
+                      {parseGitHubRepo(selected.artifacts.githubUrl)?.repo}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {/* Provider Toggle */}
+                      <div className="flex items-center gap-2 bg-neutral-100 rounded-lg p-1">
                         <button
-                          onClick={() => setIsFullscreen(true)}
-                          className="px-3 py-1.5 text-body-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+                          onClick={() => setProvider("codesandbox")}
+                          className={`px-3 py-1.5 text-body-sm font-medium rounded transition-colors duration-base ${
+                            provider === "codesandbox"
+                              ? "bg-white text-primary-600 shadow-sm"
+                              : "text-neutral-600 hover:text-neutral-900"
+                          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
                         >
-                          Fullscreen
+                          CodeSandbox
+                        </button>
+                        <button
+                          onClick={() => setProvider("stackblitz")}
+                          disabled={isLikelyNextProject}
+                          className={`px-3 py-1.5 text-body-sm font-medium rounded transition-colors duration-base ${
+                            provider === "stackblitz"
+                              ? "bg-white text-primary-600 shadow-sm"
+                              : "text-neutral-600 hover:text-neutral-900"
+                          } ${
+                            isLikelyNextProject
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
+                          title={
+                            isLikelyNextProject
+                              ? "Not recommended for Next.js projects"
+                              : ""
+                          }
+                        >
+                          StackBlitz
                         </button>
                       </div>
-                    </div>
-
-                    {isLikelyNextProject && provider === 'stackblitz' && (
-                      <div className="text-body-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                        Note: Auto-switched to CodeSandbox for better Next.js compatibility.
-                      </div>
-                    )}
-
-                    {/* External Links */}
-                    <div className="flex items-center gap-4">
-                      {codeSandboxProjectUrl && (
-                        <a
-                          href={codeSandboxProjectUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-body-sm text-primary-600 hover:text-primary-700 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
-                        >
-                          Open in CodeSandbox →
-                        </a>
-                      )}
-                      {stackBlitzProjectUrl && (
-                        <a
-                          href={stackBlitzProjectUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-body-sm text-primary-600 hover:text-primary-700 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
-                        >
-                          Open in StackBlitz →
-                        </a>
-                      )}
-                    </div>
-
-                    <div className="w-full rounded-lg overflow-hidden border border-neutral-200 h-[70vh] min-h-[520px]">
-                      <iframe
-                        title="Repo Simulator"
-                        src={embedUrl || ''}
-                        className="w-full h-full"
-                        allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-                        sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-                      />
-                    </div>
-
-                    <div className="text-caption text-neutral-500">
-                      If the embed looks stuck on "cloning", open it in a new tab (links above) to see the full error.
-                      Common causes are private repos, large installs, or required secrets.
+                      {/* Fullscreen Button */}
+                      <button
+                        onClick={() => setIsFullscreen(true)}
+                        className="px-3 py-1.5 text-body-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+                      >
+                        Fullscreen
+                      </button>
                     </div>
                   </div>
-                )
+
+                  {isLikelyNextProject && provider === "stackblitz" && (
+                    <div className="text-body-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      Note: Auto-switched to CodeSandbox for better Next.js
+                      compatibility.
+                    </div>
+                  )}
+
+                  {/* External Links */}
+                  <div className="flex items-center gap-4">
+                    {codeSandboxProjectUrl && (
+                      <a
+                        href={codeSandboxProjectUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-body-sm text-primary-600 hover:text-primary-700 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+                      >
+                        Open in CodeSandbox →
+                      </a>
+                    )}
+                    {stackBlitzProjectUrl && (
+                      <a
+                        href={stackBlitzProjectUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-body-sm text-primary-600 hover:text-primary-700 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+                      >
+                        Open in StackBlitz →
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="w-full rounded-lg overflow-hidden border border-neutral-200 h-[70vh] min-h-[520px]">
+                    <iframe
+                      title="Repo Simulator"
+                      src={embedUrl || ""}
+                      className="w-full h-full"
+                      allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+                      sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+                    />
+                  </div>
+
+                  <div className="text-caption text-neutral-500">
+                    If the embed looks stuck on "cloning", open it in a new tab
+                    (links above) to see the full error. Common causes are
+                    private repos, large installs, or required secrets.
+                  </div>
+                </div>
               )}
             </div>
           </main>
         </div>
       )}
     </>
-  )
+  );
 }
