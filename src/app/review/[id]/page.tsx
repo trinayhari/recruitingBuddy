@@ -78,7 +78,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   return (
     <main className="min-h-screen bg-neutral-50 py-12">
       <div className="max-w-4xl mx-auto px-6">
-        <div className="bg-white border border-neutral-200 rounded-lg shadow-sm p-8">
+        <div className="bg-neutral-100 border border-neutral-400 rounded-lg shadow-sm p-8">
           <div className="mb-8">
             <h1 className="text-display font-semibold text-neutral-900">Take-Home Review Buddy</h1>
             <p className="text-body-lg text-neutral-600 mt-1">

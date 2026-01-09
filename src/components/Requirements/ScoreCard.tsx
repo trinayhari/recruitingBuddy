@@ -20,7 +20,7 @@ export default function ScoreCard({ score }: ScoreCardProps) {
   };
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-lg shadow-sm p-6">
+    <div className="bg-neutral-50 border border-neutral-900 rounded-lg shadow-sm p-6">
       <h3 className="text-body-lg font-semibold text-neutral-900 mb-4">
         Overall Score
       </h3>

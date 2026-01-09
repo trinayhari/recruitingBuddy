@@ -24,13 +24,13 @@ export default function Hero() {
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
           href="/signup"
-          className="bg-neutral-900 text-white py-3 px-8 rounded-lg font-medium text-body-lg hover:bg-neutral-800 transition-all duration-base shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+          className="bg-neutral-50 text-neutral-900 border-2 border-neutral-900 py-3 px-8 rounded-lg font-medium text-body-lg hover:bg-neutral-100 transition-all duration-base shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
         >
           Get Started Free
         </Link>
         <Link
           href="/login"
-          className="bg-white text-primary-600 border-2 border-primary-600 py-3 px-8 rounded-lg font-medium text-body-lg hover:bg-primary-50 transition-all duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+          className="bg-neutral-50 text-neutral-900 border-2 border-neutral-900 py-3 px-8 rounded-lg font-medium text-body-lg hover:bg-neutral-100 transition-all duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
         >
           Sign In
         </Link>

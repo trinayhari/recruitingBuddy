@@ -12,7 +12,7 @@ export default function WorkflowSection() {
 
       <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Candidate Side */}
-        <div className="bg-white rounded-lg p-8 border border-neutral-200 hover:shadow-md transition-shadow duration-base">
+        <div className="bg-neutral-50 rounded-lg p-8 border border-neutral-900 hover:bg-neutral-100 transition-shadow duration-base">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
               <span className="text-primary-700 font-semibold text-lg">👤</span>
@@ -57,7 +57,7 @@ export default function WorkflowSection() {
         </div>
 
         {/* Reviewer Side */}
-        <div className="bg-white rounded-lg p-8 border border-neutral-200 hover:shadow-md transition-shadow duration-base">
+        <div className="bg-neutral-50 rounded-lg p-8 border border-neutral-900 hover:bg-neutral-100 transition-shadow duration-base">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
               <span className="text-primary-700 font-semibold text-lg">👥</span>

@@ -12,7 +12,7 @@ interface MetricsPanelProps {
 export default function MetricsPanel({ metrics }: MetricsPanelProps) {
   if (!metrics) {
     return (
-      <div className="bg-white border border-neutral-200 rounded-lg shadow-sm p-6">
+      <div className="bg-neutral-50 border border-neutral-900 rounded-lg shadow-sm p-6">
         <h2 className="text-h2 font-medium mb-4 text-neutral-900">Metrics</h2>
         <div className="text-body text-neutral-500">Metrics not available for this submission.</div>
       </div>
@@ -20,18 +20,18 @@ export default function MetricsPanel({ metrics }: MetricsPanelProps) {
   }
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-lg shadow-sm p-6">
+    <div className="bg-neutral-50 border border-neutral-900 rounded-lg shadow-sm p-6">
       <h2 className="text-h2 font-medium mb-6 text-neutral-900">Quantified Metrics</h2>
 
       {/* Overall Hire Signal - Always visible */}
-      <div className="mb-6 pb-6 border-b border-neutral-200">
+      <div className="mb-6 pb-6 border-b border-neutral-900">
         <h3 className="text-h2 font-medium mb-4 text-neutral-900">Overall Hire Signal</h3>
         <MetricBar value={metrics.overallHireSignal} label="Hire Signal" size="large" />
       </div>
 
       {/* Red Flags */}
       {metrics.redFlags.length > 0 && (
-        <div className="mb-6 pb-6 border-b border-neutral-200">
+        <div className="mb-6 pb-6 border-b border-neutral-900">
           <h3 className="text-h2 font-medium mb-4 text-neutral-900">Red Flags</h3>
           <RedFlagBadges redFlags={metrics.redFlags} />
         </div>
@@ -62,7 +62,7 @@ export default function MetricsPanel({ metrics }: MetricsPanelProps) {
             </div>
             {metrics.fileSizeDistribution.largeFileCount > 0 && (
               <div className="text-body-sm text-signal-moderate">
-                <span className="font-medium">Large Files (>500 lines): </span>
+                <span className="font-medium">Large Files ({'>'}500 lines): </span>
                 {metrics.fileSizeDistribution.largeFileCount}
               </div>
             )}

@@ -7,6 +7,7 @@ import MetricsPanel from './MetricsPanel'
 import MetricBar from '../MetricBar'
 import EmptyState from '../EmptyState'
 import CreateAssessmentForm from '../Assessment/CreateAssessmentForm'
+import RedFlagBadges from './RedFlagBadges'
 
 type SimulatorProvider = 'stackblitz' | 'codesandbox'
 
@@ -75,6 +76,13 @@ function buildCodeSandboxEmbedUrl(githubUrl?: string): string | null {
 
 type ActiveTab = 'analysis' | 'simulator'
 type ViewMode = 'submissions' | 'assessments'
+type DashboardWidget =
+  | 'summary'
+  | 'hire_signal'
+  | 'red_flags'
+  | 'project_development'
+  | 'software_design'
+  | 'work_habits'
 
 interface Assessment {
   id: string
@@ -103,6 +111,7 @@ export default function DashboardClient({
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null)
   const [showCreateAssessment, setShowCreateAssessment] = useState(false)
   const [assessmentsList, setAssessmentsList] = useState<Assessment[]>(assessments)
+  const [expandedWidget, setExpandedWidget] = useState<DashboardWidget | null>(null)
 
   const selected = useMemo(
     () => briefs.find((b) => b.id === selectedId) || null,
@@ -464,7 +473,7 @@ export default function DashboardClient({
                               type="text"
                               readOnly
                               value={`${typeof window !== 'undefined' ? window.location.origin : ''}/assessment/${selectedAssessment.shareable_token}`}
-                              className="flex-1 px-3 py-2 border border-primary-300 rounded-lg bg-white text-body text-neutral-900"
+                              className="flex-1 px-3 py-2 border border-neutral-900 rounded-lg bg-neutral-50 text-body text-neutral-900"
                             />
                             <button
                               onClick={() => {
@@ -533,56 +542,121 @@ export default function DashboardClient({
                   Select a submission to view details.
                 </div>
               ) : activeTab === 'analysis' ? (
-                <div className="space-y-6 transition-opacity duration-200">
-                  <div>
-                    <h2 className="text-h1 font-semibold mb-4 text-neutral-900">Summary</h2>
-                    <dl className="space-y-4">
-                      {selected.tldr.task && (
-                        <div>
-                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">Task</dt>
-                          <dd className="text-body text-neutral-900">{selected.tldr.task}</dd>
+                <div className="transition-opacity duration-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {expandedWidget === 'summary' ? (
+                      <div className="md:col-span-2 xl:col-span-3 bg-neutral-50 border border-neutral-900 rounded-lg p-8">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-h2 font-medium text-neutral-900">Summary</h3>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedWidget(null)}
+                            className="px-3 py-1.5 rounded-lg border border-neutral-900 bg-neutral-50 text-neutral-900 text-body-sm font-medium hover:bg-neutral-100 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                          >
+                            Collapse
+                          </button>
                         </div>
-                      )}
-                      {selected.tldr.delivered && (
-                        <div>
-                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">Delivered</dt>
-                          <dd className="text-body text-neutral-900">{selected.tldr.delivered}</dd>
+                        <dl className="space-y-5">
+                          {selected.tldr.task && (
+                            <div>
+                              <dt className="text-body-sm font-medium text-neutral-600 mb-1">Task</dt>
+                              <dd className="text-body text-neutral-900">{selected.tldr.task}</dd>
+                            </div>
+                          )}
+                          {selected.tldr.delivered && (
+                            <div>
+                              <dt className="text-body-sm font-medium text-neutral-600 mb-1">Delivered</dt>
+                              <dd className="text-body text-neutral-900">{selected.tldr.delivered}</dd>
+                            </div>
+                          )}
+                          {selected.tldr.stack && selected.tldr.stack.length > 0 && (
+                            <div>
+                              <dt className="text-body-sm font-medium text-neutral-600 mb-1">Stack</dt>
+                              <dd className="text-body text-neutral-900">{selected.tldr.stack.join(', ')}</dd>
+                            </div>
+                          )}
+                        </dl>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedWidget('summary')}
+                        className="text-left bg-neutral-50 border border-neutral-900 rounded-lg p-6 hover:bg-neutral-100 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-h2 font-medium text-neutral-900">Summary</h3>
+                          <span className="text-caption text-neutral-600">Expand</span>
                         </div>
-                      )}
-                      {selected.tldr.stack && selected.tldr.stack.length > 0 && (
-                        <div>
-                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">Stack</dt>
-                          <dd className="text-body text-neutral-900">{selected.tldr.stack.join(', ')}</dd>
+                        <div className="mt-4 space-y-2">
+                          <div className="text-body-sm text-neutral-600">Task</div>
+                          <div className="text-body text-neutral-900 line-clamp-3">{selected.tldr.task || '—'}</div>
                         </div>
-                      )}
-                      {selected.metrics && (
-                        <div>
-                          <dt className="text-body-sm font-medium text-neutral-600 mb-2">Hire Signal</dt>
-                          <dd>
-                            <MetricBar value={selected.metrics.overallHireSignal} label="" size="medium" />
+                      </button>
+                    )}
+
+                    {expandedWidget === 'hire_signal' ? (
+                      <div className="md:col-span-2 xl:col-span-3 bg-neutral-50 border border-neutral-900 rounded-lg p-8">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-h2 font-medium text-neutral-900">Hire Signal</h3>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedWidget(null)}
+                            className="px-3 py-1.5 rounded-lg border border-neutral-900 bg-neutral-50 text-neutral-900 text-body-sm font-medium hover:bg-neutral-100 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                          >
+                            Collapse
+                          </button>
+                        </div>
+                        {selected.metrics ? (
+                          <div>
+                            <MetricBar value={selected.metrics.overallHireSignal} label="" size="large" />
                             {selected.metrics.redFlags.length > 0 && (
-                              <p className="text-body-sm text-signal-low mt-1">
+                              <p className="text-body-sm text-signal-low mt-3">
                                 {selected.metrics.redFlags.length} red flag{selected.metrics.redFlags.length !== 1 ? 's' : ''} detected
                               </p>
                             )}
-                          </dd>
+                          </div>
+                        ) : (
+                          <div className="text-body text-neutral-600">Metrics not available for this submission.</div>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedWidget('hire_signal')}
+                        className="text-left bg-neutral-50 border border-neutral-900 rounded-lg p-6 hover:bg-neutral-100 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-h2 font-medium text-neutral-900">Hire Signal</h3>
+                          <span className="text-caption text-neutral-600">Expand</span>
                         </div>
-                      )}
-                      <div>
-                        <dt className="text-body-sm font-medium text-neutral-600 mb-1">Review</dt>
-                        <dd>
+                        <div className="mt-4">
+                          {selected.metrics ? (
+                            <MetricBar value={selected.metrics.overallHireSignal} label="" size="medium" />
+                          ) : (
+                            <div className="text-body text-neutral-600">—</div>
+                          )}
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Links (non-expandable) */}
+                    <div className="text-left bg-neutral-50 border border-neutral-900 rounded-lg p-6">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-h2 font-medium text-neutral-900">Links</h3>
+                      </div>
+                      <div className="mt-4 space-y-3">
+                        <div>
+                          <div className="text-body-sm font-medium text-neutral-600 mb-1">Reviewer Brief</div>
                           <Link
                             href={`/review/${selected.id}`}
                             className="text-body text-primary-600 hover:text-primary-700 font-medium transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
                           >
                             Open full Reviewer Brief →
                           </Link>
-                        </dd>
-                      </div>
-                      {selected.artifacts.githubUrl && (
-                        <div>
-                          <dt className="text-body-sm font-medium text-neutral-600 mb-1">GitHub</dt>
-                          <dd>
+                        </div>
+                        {selected.artifacts.githubUrl && (
+                          <div>
+                            <div className="text-body-sm font-medium text-neutral-600 mb-1">GitHub</div>
                             <a
                               href={selected.artifacts.githubUrl}
                               target="_blank"
@@ -591,16 +665,200 @@ export default function DashboardClient({
                             >
                               {selected.artifacts.githubUrl}
                             </a>
-                          </dd>
-                        </div>
-                      )}
-                    </dl>
-                  </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                  {/* Metrics Panel */}
-                  {selected.metrics && (
-                    <MetricsPanel metrics={selected.metrics} />
-                  )}
+                    {/* Red Flags */}
+                    {expandedWidget === 'red_flags' ? (
+                      <div className="md:col-span-2 xl:col-span-3 bg-neutral-50 border border-neutral-900 rounded-lg p-8">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-h2 font-medium text-neutral-900">Red Flags</h3>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedWidget(null)}
+                            className="px-3 py-1.5 rounded-lg border border-neutral-900 bg-neutral-50 text-neutral-900 text-body-sm font-medium hover:bg-neutral-100 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                          >
+                            Collapse
+                          </button>
+                        </div>
+                        {selected.metrics ? (
+                          selected.metrics.redFlags.length > 0 ? (
+                            <RedFlagBadges redFlags={selected.metrics.redFlags} />
+                          ) : (
+                            <div className="text-body text-neutral-600">No red flags detected.</div>
+                          )
+                        ) : (
+                          <div className="text-body text-neutral-600">Metrics not available for this submission.</div>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedWidget('red_flags')}
+                        className="text-left bg-neutral-50 border border-neutral-900 rounded-lg p-6 hover:bg-neutral-100 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-h2 font-medium text-neutral-900">Red Flags</h3>
+                          <span className="text-caption text-neutral-600">Expand</span>
+                        </div>
+                        <div className="mt-4 text-body text-neutral-600">
+                          {selected.metrics
+                            ? `${selected.metrics.redFlags.length} red flag${selected.metrics.redFlags.length !== 1 ? 's' : ''}`
+                            : 'Not available'}
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Project Development */}
+                    {expandedWidget === 'project_development' ? (
+                      <div className="md:col-span-2 xl:col-span-3 bg-neutral-50 border border-neutral-900 rounded-lg p-8">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-h2 font-medium text-neutral-900">Project Development</h3>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedWidget(null)}
+                            className="px-3 py-1.5 rounded-lg border border-neutral-900 bg-neutral-50 text-neutral-900 text-body-sm font-medium hover:bg-neutral-100 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                          >
+                            Collapse
+                          </button>
+                        </div>
+                        {selected.metrics ? (
+                          <div className="space-y-6">
+                            <MetricBar value={selected.metrics.codeOrganizationScore} label="Code Organization" size="medium" />
+                            <MetricBar
+                              value={
+                                selected.metrics.testPresence.hasTests
+                                  ? Math.min(100, selected.metrics.testPresence.testRatio * 200)
+                                  : 0
+                              }
+                              label="Test Coverage"
+                              size="medium"
+                            />
+                            <div className="text-body-sm text-neutral-600">
+                              {selected.metrics.testPresence.testFileCount} test file
+                              {selected.metrics.testPresence.testFileCount !== 1 ? 's' : ''}
+                            </div>
+                            <MetricBar value={selected.metrics.documentationScore} label="Documentation" size="medium" />
+                            <MetricBar value={selected.metrics.dependencyHealth} label="Dependency Health" size="medium" />
+                          </div>
+                        ) : (
+                          <div className="text-body text-neutral-600">Metrics not available for this submission.</div>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedWidget('project_development')}
+                        className="text-left bg-neutral-50 border border-neutral-900 rounded-lg p-6 hover:bg-neutral-100 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-h2 font-medium text-neutral-900">Project Development</h3>
+                          <span className="text-caption text-neutral-600">Expand</span>
+                        </div>
+                        <div className="mt-4">
+                          {selected.metrics ? (
+                            <MetricBar value={selected.metrics.codeOrganizationScore} label="" size="small" />
+                          ) : (
+                            <div className="text-body text-neutral-600">Not available</div>
+                          )}
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Software Design */}
+                    {expandedWidget === 'software_design' ? (
+                      <div className="md:col-span-2 xl:col-span-3 bg-neutral-50 border border-neutral-900 rounded-lg p-8">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-h2 font-medium text-neutral-900">Software Design</h3>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedWidget(null)}
+                            className="px-3 py-1.5 rounded-lg border border-neutral-900 bg-neutral-50 text-neutral-900 text-body-sm font-medium hover:bg-neutral-100 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                          >
+                            Collapse
+                          </button>
+                        </div>
+                        {selected.metrics ? (
+                          <div className="space-y-6">
+                            <MetricBar value={selected.metrics.typeSafetyRatio} label="Type Safety" size="medium" />
+                            <div className="text-body-sm text-neutral-600">{selected.metrics.typeSafetyRatio}% TypeScript</div>
+                            <MetricBar value={selected.metrics.modularityIndex} label="Modularity" size="medium" />
+                            <MetricBar value={selected.metrics.entryPointClarity} label="Entry Points" size="medium" />
+                            <MetricBar value={selected.metrics.apiStructureScore} label="API Structure" size="medium" />
+                          </div>
+                        ) : (
+                          <div className="text-body text-neutral-600">Metrics not available for this submission.</div>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedWidget('software_design')}
+                        className="text-left bg-neutral-50 border border-neutral-900 rounded-lg p-6 hover:bg-neutral-100 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-h2 font-medium text-neutral-900">Software Design</h3>
+                          <span className="text-caption text-neutral-600">Expand</span>
+                        </div>
+                        <div className="mt-4">
+                          {selected.metrics ? (
+                            <MetricBar value={selected.metrics.modularityIndex} label="" size="small" />
+                          ) : (
+                            <div className="text-body text-neutral-600">Not available</div>
+                          )}
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Work Habits */}
+                    {expandedWidget === 'work_habits' ? (
+                      <div className="md:col-span-2 xl:col-span-3 bg-neutral-50 border border-neutral-900 rounded-lg p-8">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-h2 font-medium text-neutral-900">Work Habits</h3>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedWidget(null)}
+                            className="px-3 py-1.5 rounded-lg border border-neutral-900 bg-neutral-50 text-neutral-900 text-body-sm font-medium hover:bg-neutral-100 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                          >
+                            Collapse
+                          </button>
+                        </div>
+                        {selected.metrics ? (
+                          <div className="space-y-6">
+                            <MetricBar value={selected.metrics.commitQualityScore} label="Commit Quality" size="medium" />
+                            <MetricBar value={selected.metrics.developmentPatternScore} label="Development Pattern" size="medium" />
+                            <MetricBar value={selected.metrics.timeInvestment.score} label="Time Investment" size="medium" />
+                            <div className="text-body-sm text-neutral-600">
+                              {selected.metrics.timeInvestment.hours.toFixed(1)} hours
+                            </div>
+                            <MetricBar value={selected.metrics.iterationScore} label="Iteration" size="medium" />
+                          </div>
+                        ) : (
+                          <div className="text-body text-neutral-600">Metrics not available for this submission.</div>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedWidget('work_habits')}
+                        className="text-left bg-neutral-50 border border-neutral-900 rounded-lg p-6 hover:bg-neutral-100 transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-h2 font-medium text-neutral-900">Work Habits</h3>
+                          <span className="text-caption text-neutral-600">Expand</span>
+                        </div>
+                        <div className="mt-4">
+                          {selected.metrics ? (
+                            <MetricBar value={selected.metrics.commitQualityScore} label="" size="small" />
+                          ) : (
+                            <div className="text-body text-neutral-600">Not available</div>
+                          )}
+                        </div>
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 /* Simulator Tab Content */
@@ -626,7 +884,7 @@ export default function DashboardClient({
                             onClick={() => setProvider('codesandbox')}
                             className={`px-3 py-1.5 text-body-sm font-medium rounded transition-colors duration-base ${
                               provider === 'codesandbox'
-                                ? 'bg-white text-primary-600 shadow-sm'
+                                ? 'bg-neutral-50 text-neutral-900 border border-neutral-900'
                                 : 'text-neutral-600 hover:text-neutral-900'
                             } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
                           >
@@ -637,7 +895,7 @@ export default function DashboardClient({
                             disabled={isLikelyNextProject}
                             className={`px-3 py-1.5 text-body-sm font-medium rounded transition-colors duration-base ${
                               provider === 'stackblitz'
-                                ? 'bg-white text-primary-600 shadow-sm'
+                                ? 'bg-neutral-50 text-neutral-900 border border-neutral-900'
                                 : 'text-neutral-600 hover:text-neutral-900'
                             } ${isLikelyNextProject ? 'opacity-50 cursor-not-allowed' : ''} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2`}
                             title={isLikelyNextProject ? 'Not recommended for Next.js projects' : ''}

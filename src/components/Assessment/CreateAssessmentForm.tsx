@@ -56,7 +56,7 @@ export default function CreateAssessmentForm({ onSuccess, onCancel }: CreateAsse
   }
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-lg shadow-sm p-6">
+    <div className="bg-neutral-50 border border-neutral-900 rounded-lg shadow-sm p-6">
       <h2 className="text-h2 font-semibold mb-4 text-neutral-900">Create New Assessment</h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -70,7 +70,7 @@ export default function CreateAssessmentForm({ onSuccess, onCancel }: CreateAsse
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g., Frontend Developer Take-Home"
-            className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed"
+            className="w-full px-3.5 py-2.5 border border-neutral-900 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed"
             disabled={isSubmitting}
             required
           />
@@ -86,7 +86,7 @@ export default function CreateAssessmentForm({ onSuccess, onCancel }: CreateAsse
             onChange={(e) => setContent(e.target.value)}
             placeholder="Paste the project requirements/prompt here..."
             rows={10}
-            className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed resize-y"
+            className="w-full px-3.5 py-2.5 border border-neutral-900 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed resize-y"
             disabled={isSubmitting}
             required
           />
@@ -110,7 +110,7 @@ export default function CreateAssessmentForm({ onSuccess, onCancel }: CreateAsse
             type="button"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="px-6 py-2.5 border border-neutral-300 rounded-lg font-medium text-body text-neutral-700 hover:bg-neutral-50 disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed transition-all duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+            className="px-6 py-2.5 border border-neutral-900 rounded-lg font-medium text-body text-neutral-900 bg-neutral-50 hover:bg-neutral-100 disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed transition-all duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
           >
             Cancel
           </button>

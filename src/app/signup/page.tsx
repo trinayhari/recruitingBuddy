@@ -5,7 +5,7 @@ export default function SignupPage() {
   return (
     <main className="min-h-screen bg-neutral-50 flex items-center justify-center py-12 px-6">
       <div className="max-w-md w-full">
-        <div className="bg-white border border-neutral-200 rounded-lg shadow-sm p-8">
+        <div className="bg-neutral-100 border border-neutral-400 rounded-lg shadow-sm p-8">
           <div className="mb-8">
             <h1 className="text-display font-semibold text-neutral-900 mb-2">Create Account</h1>
             <p className="text-body-lg text-neutral-600">

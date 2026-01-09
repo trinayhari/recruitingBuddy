@@ -12,31 +12,31 @@ module.exports = {
         mono: ['IBM Plex Mono', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       colors: {
-        // Neutral palette (warm paper-like)
+        // Neutral palette (X-like dark)
         neutral: {
-          50: '#FAFAF9',
-          100: '#F5F5F4',
-          200: '#E7E5E4',
-          300: '#D6D3D1',
-          400: '#A8A29E',
-          500: '#78716C',
-          600: '#57534E',
-          700: '#44403C',
-          800: '#292524',
-          900: '#1C1917',
+          50: '#000000',
+          100: '#070707',
+          200: '#0F0F0F',
+          300: '#171717',
+          400: '#262626',
+          500: '#6B7280',
+          600: '#9CA3AF',
+          700: '#D1D5DB',
+          800: '#E5E7EB',
+          900: '#FFFFFF',
         },
-        // Primary accent (calm indigo)
+        // Primary accent (X-like blue)
         primary: {
-          50: '#EEF2FF',
-          100: '#E0E7FF',
-          200: '#C7D2FE',
-          300: '#A5B4FC',
-          400: '#818CF8',
-          500: '#6366F1',
-          600: '#3B5BDB',
-          700: '#364FC7',
-          800: '#2F4AAD',
-          900: '#1E3A8A',
+          50: '#E8F5FE',
+          100: '#D6EFFE',
+          200: '#A7DEFD',
+          300: '#77CCFC',
+          400: '#47BAFB',
+          500: '#1D9BF0',
+          600: '#1A8CD8',
+          700: '#177BC0',
+          800: '#13689F',
+          900: '#0F4E77',
         },
         // Signal colors (discrete, not rainbow)
         signal: {

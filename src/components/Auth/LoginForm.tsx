@@ -52,7 +52,7 @@ export default function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base"
+          className="w-full px-3.5 py-2.5 border border-neutral-900 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base"
           disabled={isLoading}
         />
       </div>
@@ -68,7 +68,7 @@ export default function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={8}
-          className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base"
+          className="w-full px-3.5 py-2.5 border border-neutral-900 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base"
           disabled={isLoading}
         />
       </div>

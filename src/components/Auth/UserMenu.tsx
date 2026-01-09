@@ -51,13 +51,13 @@ export default function UserMenu() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 z-50">
-          <div className="px-4 py-2 border-b border-neutral-200">
+        <div className="absolute right-0 mt-2 w-48 bg-neutral-50 border border-neutral-900 rounded-lg shadow-lg py-1 z-50">
+          <div className="px-4 py-2 border-b border-neutral-900">
             <p className="text-body-sm font-medium text-neutral-900">{user.email}</p>
           </div>
           <button
             onClick={handleSignOut}
-            className="w-full text-left px-4 py-2 text-body-sm text-neutral-700 hover:bg-neutral-50 transition-colors duration-base"
+            className="w-full text-left px-4 py-2 text-body-sm text-neutral-900 hover:bg-neutral-100 transition-colors duration-base"
           >
             Sign out
           </button>

@@ -88,7 +88,7 @@ export default function InputForm() {
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-12">
-      <div className="bg-white border border-neutral-200 rounded-lg shadow-sm p-6 lg:p-8">
+      <div className="bg-neutral-100 border border-neutral-400 rounded-lg shadow-sm p-6 lg:p-8">
         <div className="flex items-start justify-between gap-4 mb-8">
           <div>
             <h1 className="text-display font-semibold mb-2 text-neutral-900">Take-Home Review Buddy</h1>
@@ -117,7 +117,7 @@ export default function InputForm() {
             value={githubUrl}
             onChange={(e) => setGithubUrl(e.target.value)}
             placeholder="https://github.com/username/repo"
-            className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed"
+            className="w-full px-3.5 py-2.5 border border-neutral-400 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed"
             disabled={isSubmitting || !!zipFile}
           />
           <p className="text-caption text-neutral-500 mt-1.5">
@@ -135,7 +135,7 @@ export default function InputForm() {
             id="zipFile"
             accept=".zip"
             onChange={(e) => setZipFile(e.target.files?.[0] || null)}
-            className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-body-sm file:font-medium file:bg-neutral-100 file:text-neutral-700 hover:file:bg-neutral-200"
+            className="w-full px-3.5 py-2.5 border border-neutral-400 rounded-lg bg-neutral-50 text-body text-neutral-900 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-body-sm file:font-medium file:bg-neutral-200 file:text-neutral-900 hover:file:bg-neutral-300"
             disabled={isSubmitting || !!githubUrl}
           />
           <p className="text-caption text-neutral-500 mt-1.5">
@@ -154,7 +154,7 @@ export default function InputForm() {
             onChange={(e) => setProjectPrompt(e.target.value)}
             placeholder="Paste the project requirements/prompt here to enable automated test generation..."
             rows={6}
-            className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed resize-y"
+            className="w-full px-3.5 py-2.5 border border-neutral-400 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed resize-y"
             disabled={isSubmitting}
           />
           <p className="text-caption text-neutral-500 mt-1.5">
@@ -167,7 +167,7 @@ export default function InputForm() {
                   type="checkbox"
                   checked={autoGenerateTests}
                   onChange={(e) => setAutoGenerateTests(e.target.checked)}
-                  className="rounded border-neutral-300 text-primary-600 focus:ring-primary-600"
+                  className="rounded border-neutral-400 bg-neutral-50 text-primary-600 focus:ring-primary-600"
                   disabled={isSubmitting}
                 />
                 <span>Auto-generate tests after analysis</span>
@@ -189,7 +189,7 @@ export default function InputForm() {
               value={videoLink}
               onChange={(e) => setVideoLink(e.target.value)}
               placeholder="https://loom.com/share/..."
-              className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed"
+              className="w-full px-3.5 py-2.5 border border-neutral-400 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed"
               disabled={isSubmitting}
             />
           </div>
@@ -205,7 +205,7 @@ export default function InputForm() {
               onChange={(e) => setChatExport(e.target.value)}
               placeholder="Paste the chat export text here..."
               rows={4}
-              className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed resize-y"
+              className="w-full px-3.5 py-2.5 border border-neutral-400 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed resize-y"
               disabled={isSubmitting}
             />
           </div>
@@ -221,7 +221,7 @@ export default function InputForm() {
               onChange={(e) => setReflections(e.target.value)}
               placeholder="Any reflections or notes from the candidate..."
               rows={4}
-              className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed resize-y"
+              className="w-full px-3.5 py-2.5 border border-neutral-400 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed resize-y"
               disabled={isSubmitting}
             />
           </div>

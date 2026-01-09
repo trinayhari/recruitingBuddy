@@ -94,13 +94,13 @@ export default function AssessmentSubmissionForm({
 
   return (
     <div className="max-w-2xl mx-auto px-6">
-      <div className="bg-white border border-neutral-200 rounded-lg shadow-sm p-6 lg:p-8">
+      <div className="bg-neutral-50 border border-neutral-900 rounded-lg shadow-sm p-6 lg:p-8">
         <div className="mb-8">
           <h1 className="text-display font-semibold mb-2 text-neutral-900">
             {assessment.title || 'Assessment Submission'}
           </h1>
           <div className="prose prose-sm max-w-none mt-4">
-            <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+            <div className="bg-neutral-50 border border-neutral-900 rounded-lg p-4">
               <h3 className="text-body-sm font-medium text-neutral-900 mb-2">Assessment Requirements</h3>
               <div className="text-body text-neutral-700 whitespace-pre-wrap">
                 {assessment.content}
@@ -121,7 +121,7 @@ export default function AssessmentSubmissionForm({
               value={githubUrl}
               onChange={(e) => setGithubUrl(e.target.value)}
               placeholder="https://github.com/username/repo"
-              className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed"
+              className="w-full px-3.5 py-2.5 border border-neutral-900 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed"
               disabled={isSubmitting || !!zipFile}
             />
             <p className="text-caption text-neutral-500 mt-1.5">
@@ -139,7 +139,7 @@ export default function AssessmentSubmissionForm({
               id="zipFile"
               accept=".zip"
               onChange={(e) => setZipFile(e.target.files?.[0] || null)}
-              className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-body-sm file:font-medium file:bg-neutral-100 file:text-neutral-700 hover:file:bg-neutral-200"
+              className="w-full px-3.5 py-2.5 border border-neutral-900 rounded-lg bg-neutral-50 text-body text-neutral-900 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-body-sm file:font-medium file:bg-neutral-200 file:text-neutral-900 hover:file:bg-neutral-300"
               disabled={isSubmitting || !!githubUrl}
             />
             <p className="text-caption text-neutral-500 mt-1.5">
@@ -160,7 +160,7 @@ export default function AssessmentSubmissionForm({
                 value={videoLink}
                 onChange={(e) => setVideoLink(e.target.value)}
                 placeholder="https://loom.com/share/..."
-                className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed"
+                className="w-full px-3.5 py-2.5 border border-neutral-900 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed"
                 disabled={isSubmitting}
               />
             </div>
@@ -176,7 +176,7 @@ export default function AssessmentSubmissionForm({
                 onChange={(e) => setChatExport(e.target.value)}
                 placeholder="Paste the chat export text here..."
                 rows={4}
-                className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed resize-y"
+                className="w-full px-3.5 py-2.5 border border-neutral-900 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed resize-y"
                 disabled={isSubmitting}
               />
             </div>
@@ -192,7 +192,7 @@ export default function AssessmentSubmissionForm({
                 onChange={(e) => setReflections(e.target.value)}
                 placeholder="Any reflections or notes from the candidate..."
                 rows={4}
-                className="w-full px-3.5 py-2.5 border border-neutral-200 rounded-lg bg-white text-body focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-50 disabled:text-neutral-500 disabled:cursor-not-allowed resize-y"
+                className="w-full px-3.5 py-2.5 border border-neutral-900 rounded-lg bg-neutral-50 text-body text-neutral-900 placeholder:text-neutral-600 focus:border-primary-600 focus:outline-none focus:ring-3 focus:ring-primary-600/12 transition-all duration-base disabled:bg-neutral-200 disabled:text-neutral-600 disabled:cursor-not-allowed resize-y"
                 disabled={isSubmitting}
               />
             </div>
